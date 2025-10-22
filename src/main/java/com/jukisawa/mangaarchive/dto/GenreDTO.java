@@ -1,18 +1,18 @@
 package com.jukisawa.mangaarchive.dto;
 
 public class GenreDTO {
-    private int Id;
+    private int id;
     private final String name;
     
     public GenreDTO(int id, String name) {
-        Id = id;
+        this.id = id;
         this.name = name;
     }
     public int getId() {
-        return Id;
+        return id;
     }
     public void setId(int id) {
-        Id = id;
+        this.id = id;
     }
     public String getName() {
         return name;
@@ -21,5 +21,18 @@ public class GenreDTO {
     @Override
     public String toString() {
         return name;
+    }
+
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(this.id);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof GenreDTO other)) return false;
+        return id == other.id;
     }
 }

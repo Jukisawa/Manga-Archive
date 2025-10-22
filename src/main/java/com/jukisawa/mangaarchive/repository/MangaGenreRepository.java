@@ -36,7 +36,7 @@ public class MangaGenreRepository {
                 pstmt.setInt(2, genreId);
                 pstmt.addBatch();
             }
-            pstmt.executeUpdate();
+            pstmt.executeBatch();
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim insert von manga genre nm Einträgen", e);
         }
