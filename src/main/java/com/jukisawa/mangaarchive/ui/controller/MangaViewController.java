@@ -274,7 +274,8 @@ public class MangaViewController {
             popupScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
 
             Stage popupStage = new Stage();
-            popupStage.setTitle(manga == null ? "Neuer Manga erfassen" : "Manga bearbeiten");
+            boolean newManga = manga == null;
+            popupStage.setTitle(newManga ? "Neuer Manga erfassen" : "Manga bearbeiten");
             popupStage.setScene(popupScene);
             popupStage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
             popupStage.setResizable(false);
@@ -285,7 +286,9 @@ public class MangaViewController {
             popupStage.showAndWait();
 
             if (controller.isSaved()) {
-                mangaList.add(controller.getMangaDTO());
+                if (newManga) {
+                    mangaList.add(controller.getMangaDTO());
+                }
             }
 
         } catch (IOException e) {

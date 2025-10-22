@@ -126,6 +126,7 @@ public class MangaPopupController {
                 .toList();
 
         manga.setGenres(selectedGenres);
+        manga.setVolumes(new ArrayList<>());
         mangaService.saveManga(manga);
         saved = true;
         closeWindow();

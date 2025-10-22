@@ -58,13 +58,13 @@ public class Table<T> extends VBox {
     }
 
     public void addStringColumn(String title, int minWidth, Function<T, String> valueProvider, boolean centerContent,
-            boolean centerHeader) {
+                                boolean centerHeader) {
         addStringColumn(title, minWidth, valueProvider, t -> valueProvider.apply(t).toLowerCase(), centerContent,
                 centerHeader);
     }
 
     public void addStringColumn(String title, int width, Function<T, String> valueProvider,
-            Function<T, String> sortKeyExtractor, boolean centerContent, boolean centerHeader) {
+                                Function<T, String> sortKeyExtractor, boolean centerContent, boolean centerHeader) {
         addNodeColumn(title, width, t -> {
             Label label = new Label(valueProvider.apply(t));
             label.setPrefWidth(width);
@@ -89,12 +89,12 @@ public class Table<T> extends VBox {
     }
 
     public void addNodeColumn(String title, int width, Function<T, Node> nodeProvider, boolean centerContent,
-            boolean centerHeader) {
+                              boolean centerHeader) {
         addNodeColumn(title, width, nodeProvider, null, centerContent, centerHeader);
     }
 
     public void addNodeColumn(String title, int width, Function<T, Node> nodeProvider, Function<T, String> sortKey,
-            boolean centerContent, boolean centerHeader) {
+                              boolean centerContent, boolean centerHeader) {
         columns.add(new Column<>(title, width, nodeProvider, null, sortKey, centerHeader));
         updateHeader();
         refresh();
@@ -302,7 +302,7 @@ public class Table<T> extends VBox {
         boolean centerHeader;
 
         Column(String title, double minWidth, Function<T, Node> nodeProvider, Runnable headerAction,
-                Function<T, String> sortKeyExtractor, boolean centerHeader) {
+               Function<T, String> sortKeyExtractor, boolean centerHeader) {
             this.title = title;
             this.minWidth = minWidth;
             this.nodeProvider = nodeProvider;
