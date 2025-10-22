@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import com.jukisawa.mangaarchive.ui.components.Table?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.jukisawa.mangaarchive.ui.controller.MangaViewController" spacing="10">
+
+    <!-- Filterbereich -->
+    <HBox prefHeight="100" alignment="CENTER_LEFT" spacing="10">
+        <TextField fx:id="filterField" promptText="Suche..." />
+        <CheckBox fx:id="completedCb" text="Abgeschlossen" selected="true" />
+        <CheckBox fx:id="abortedCb" text="Abgebrochen" selected="true" />
+        <Button fx:id="genreFilterButton" text="Genre auswählen" />
+    </HBox>
+
+    <!-- manga Tabelle -->
+    <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER">
+        <Table fx:id="mangaTable"/>
+    </ScrollPane>
+</VBox>

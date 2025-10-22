@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.jukisawa</groupId>
+    <artifactId>Manga-Archive</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Manga-Archive</name>
+    <description>An installable SpringBoot JavaFX application for Windows</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javafx.version>25</javafx.version>
+        <jpackageInputDirectory>${project.build.directory}/jpackage-input</jpackageInputDirectory>
+        <maven.build.timestamp.format>yy.MM.ddHH.mmss</maven.build.timestamp.format>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.50.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <outputDirectory>${jpackageInputDirectory}</outputDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${jpackageInputDirectory}/lib
+                            </outputDirectory>
+                            <excludeGroupIds>
+                                org.openjfx
+                            </excludeGroupIds>
+                            <includeScope>
+                                runtime
+                            </includeScope>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>22</source>
+                    <target>22</target>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>auto-clean</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                        <configuration>
+                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                            <filesets>
+                                <fileset>
+                                    <directory>${project.build.directory}/jpackage</directory>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.akman</groupId>
+                <artifactId>jpackage-maven-plugin</artifactId>
+                <version>0.1.5</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>jpackage</goal>
+                        </goals>
+                        <configuration>
+                            <name>Manga-Archive</name>
+                            <appversion>${maven.build.timestamp}</appversion>
+                            <copyright>Ja</copyright>
+                            <description>Manga Archive</description>
+                            <vendor>Jukisawa</vendor>
+                            <icon>src/main/resources/com/jukisawa/mangaarchive/icons/icon.ico</icon>
+                            <modulepath>
+                                <dependencysets>
+                                    <dependencyset>
+                                        <includeoutput>false</includeoutput>
+                                        <excludeautomatic>true</excludeautomatic>
+                                        <includes>
+                                            <include>glob:**/javafx-*-win.jar</include>
+                                        </includes>
+                                    </dependencyset>
+                                </dependencysets>
+                            </modulepath>
+                            <addmodules>
+                                <!-- we add required modules here,
+                                     we need to include base ones from the jdk which are not
+                                     part of the minimum service set that jpackage uses by default,
+                                     for example jdk.crypto.cryptoki is needed for ssl support and
+                                     jdk.crypto.ec if you need to support elliptic curve ciphers in ssl
+                                     and java.sql if you (or a library you use) uses jdbc, etc.
+                                     you would want different ones for another app,
+                                     libraries that are not treated as modular should need to be listed,
+                                     transitively included modules don`t need to be listed -->
+                                <addmodule>jdk.crypto.cryptoki</addmodule>
+                                <addmodule>jdk.crypto.ec</addmodule>
+                                <addmodule>java.sql</addmodule>
+                                <addmodule>java.naming</addmodule>
+                                <addmodule>java.net.http</addmodule>
+                                <addmodule>java.instrument</addmodule>
+                                <addmodule>javafx.controls</addmodule>
+                                <addmodule>javafx.fxml</addmodule>
+                                <!-- if you want these other javafx modules then
+                                     uncomment them and ensure you
+                                     also have maven dependencies for them -->
+                                <!--                                <addmodule>javafx.media</addmodule>-->
+                                <!--                                <addmodule>javafx.swing</addmodule>-->
+                                <!--                                <addmodule>javafx.web</addmodule>-->
+                            </addmodules>
+                            <!-- our app is non-modular, so we wont have a module entry, we set the mainjar and mainclass instead -->
+                            <!--                            <module>com.jukisawa.mangaarchive/HelloApplication</module>-->
+                            <input>${jpackageInputDirectory}</input>
+                            <mainjar>Manga-Archive-1.0-SNAPSHOT.jar</mainjar>
+                            <mainclass>com.jukisawa.mangaarchive.MainApplication</mainclass>
+                            <!--                            <javaoptions>-Dfile.encoding=UTF-8</javaoptions>-->
+                            <!--                            <installdir>Utilities/Win Installed FX App</installdir>-->
+                            <!--                            <licensefile>${project.basedir}/config/jpackage/LICENSE</licensefile>-->
+                            <!--                            <resourcedir>${project.basedir}/config/jpackage/resources</resourcedir>-->
+                            <!--                            <windirchooser>false</windirchooser>-->
+                            <winmenu>true</winmenu>
+                            <!--                            <winmenugroup>Utilities/Win Installed FX App</winmenugroup>-->
+                            <winperuserinstall>true</winperuserinstall>
+                            <winshortcut>true</winshortcut>
+                            <!--                            <winupgradeuuid>${project.build.uuid}</winupgradeuuid>-->
+
+                            <!-- if something goes wrong (and it will..) enable the winconsole and run the app from the command line
+                                 then if the app aborts with an exception you can see it
+                                 To run from the command line execute
+                                    <your user home>\AppData\Local\<your app>\<your app>.exe
+                                 -->
+                            <!--                            <winconsole>true</winconsole>-->
+                            <type>EXE</type>
+                            <verbose>true</verbose>
+                            <!-- example for setting jvm options if needed -->
+                            <javaoptions>--enable-preview</javaoptions>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                        <version>9.5</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.1</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>
