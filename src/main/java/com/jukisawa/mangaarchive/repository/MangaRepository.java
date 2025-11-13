@@ -1,6 +1,7 @@
 package com.jukisawa.mangaarchive.repository;
 
 import com.jukisawa.mangaarchive.dto.MangaDTO;
+import com.jukisawa.mangaarchive.dto.MangaState;
 
 import java.io.ByteArrayInputStream;
 import java.sql.*;
@@ -19,21 +20,20 @@ public class MangaRepository {
     }
 
     public void addManga(MangaDTO mangaDTO) {
-        String insertManga = "INSERT INTO manga(name, location, completed, aborted, rating, cover_image, related, alternate_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertManga = "INSERT INTO manga(name, location, state, rating, cover_image, related, alternate_name) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertManga, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
-            pstmt.setBoolean(3, mangaDTO.isCompleted());
-            pstmt.setBoolean(4, mangaDTO.isAborted());
-            pstmt.setInt(5, mangaDTO.getRating());
+            pstmt.setString(3, mangaDTO.getState().name());
+            pstmt.setInt(4, mangaDTO.getRating());
             if (mangaDTO.getCoverImage() != null) {
                 ByteArrayInputStream bais = new ByteArrayInputStream(mangaDTO.getCoverImage());
-                pstmt.setBlob(6, bais);
+                pstmt.setBlob(5, bais);
             } else {
-                pstmt.setNull(6, java.sql.Types.BLOB);
+                pstmt.setNull(5, java.sql.Types.BLOB);
             }
-            pstmt.setString(7, mangaDTO.getRelated());
-            pstmt.setString(8, mangaDTO.getAlternateName());
+            pstmt.setString(6, mangaDTO.getRelated());
+            pstmt.setString(7, mangaDTO.getAlternateName());
             pstmt.executeUpdate();
             try (ResultSet keys = pstmt.getGeneratedKeys()) {
                 keys.next();
@@ -45,21 +45,20 @@ public class MangaRepository {
     }
 
     public void updateManga(MangaDTO mangaDTO) {
-        String updateManga = "UPDATE manga set name = ?, location = ?, completed = ?, aborted = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ? WHERE id = ?";
+        String updateManga = "UPDATE manga set name = ?, location = ?, state = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
-            pstmt.setBoolean(3, mangaDTO.isCompleted());
-            pstmt.setBoolean(4, mangaDTO.isAborted());
-            pstmt.setInt(5, mangaDTO.getRating());
+            pstmt.setString(3, mangaDTO.getState().name());
+            pstmt.setInt(4, mangaDTO.getRating());
             if (mangaDTO.getCoverImage() != null) {
                 ByteArrayInputStream bais = new ByteArrayInputStream(mangaDTO.getCoverImage());
-                pstmt.setBlob(6, bais);
+                pstmt.setBlob(5, bais);
             } else {
-                pstmt.setNull(6, java.sql.Types.BLOB);
+                pstmt.setNull(5, java.sql.Types.BLOB);
             }
-            pstmt.setString(7, mangaDTO.getRelated());
-            pstmt.setString(8, mangaDTO.getAlternateName());
+            pstmt.setString(6, mangaDTO.getRelated());
+            pstmt.setString(7, mangaDTO.getAlternateName());
             pstmt.setInt(8, mangaDTO.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -68,13 +67,13 @@ public class MangaRepository {
     }
 
     public List<MangaDTO> getAll() {
-        String selectManga = "SELECT id, name, location, completed, aborted, rating, cover_image, related, alternate_name FROM manga";
+        String selectManga = "SELECT id, name, location, state, rating, cover_image, related, alternate_name FROM manga";
         List<MangaDTO> Result = new ArrayList<>();
         try (Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(selectManga)) {
+             ResultSet rs = stmt.executeQuery(selectManga)) {
             while (rs.next()) {
-                MangaDTO mangaDTO = new MangaDTO(rs.getInt("id"), rs.getString("name"), rs.getString("location"), rs.getBoolean("completed"),
-                        rs.getBoolean("aborted"), null, rs.getInt("rating"), null, rs.getBytes("cover_image"), rs.getString("related"), rs.getString("alternate_name"));
+                MangaDTO mangaDTO = new MangaDTO(rs.getInt("id"), rs.getString("name"), rs.getString("location"), MangaState.valueOf(rs.getString("state")),
+                        null, rs.getInt("rating"), null, rs.getBytes("cover_image"), rs.getString("related"), rs.getString("alternate_name"));
                 Result.add(mangaDTO);
             }
         } catch (SQLException e) {

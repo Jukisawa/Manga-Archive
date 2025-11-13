@@ -30,6 +30,7 @@
             <TextField fx:id="filterField" promptText="Suche..."/>
             <CheckBox fx:id="completedCb" text="Abgeschlossen" selected="true"/>
             <CheckBox fx:id="abortedCb" text="Abgebrochen" selected="true"/>
+            <CheckBox fx:id="ongoingCb" text="Laufend" selected="true"/>
             <Button fx:id="genreFilterButton" text="Genre auswählen"/>
         </HBox>
     </VBox>
@@ -39,7 +40,8 @@
         <padding>
             <Insets left="10" right="10"/>
         </padding>
-        <Label fx:id="stats" styleClass="table-header"/>
+        <HBox fx:id="stats" styleClass="table-header">
+        </HBox>
     </HBox>
     <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER">
         <Table fx:id="mangaTable"/>

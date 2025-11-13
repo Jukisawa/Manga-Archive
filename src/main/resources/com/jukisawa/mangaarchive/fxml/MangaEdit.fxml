@@ -19,8 +19,10 @@
         <VBox spacing="10" alignment="CENTER_LEFT">
             <TextField fx:id="nameField" promptText="Name"/>
             <TextField fx:id="locationField" promptText="Location"/>
-            <CheckBox fx:id="completedCb" text="Abgeschlossen"/>
-            <CheckBox fx:id="abortedCb" text="Abgebrochen"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Status:"/>
+                <ComboBox fx:id="stateDropdown" prefWidth="150"/>
+            </HBox>
             <Label text="Genre auswählen:"
                    style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
             <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" minHeight="300" maxHeight="300">

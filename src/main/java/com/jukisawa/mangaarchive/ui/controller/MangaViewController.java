@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import com.jukisawa.mangaarchive.dto.GenreDTO;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
+import com.jukisawa.mangaarchive.dto.MangaState;
 import com.jukisawa.mangaarchive.dto.VolumeDTO;
 import com.jukisawa.mangaarchive.service.GenreService;
 import com.jukisawa.mangaarchive.service.MangaService;
@@ -31,6 +32,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
@@ -51,12 +53,14 @@ public class MangaViewController {
     @FXML
     private CheckBox abortedCb;
     @FXML
+    public CheckBox ongoingCb;
+    @FXML
     private Button genreFilterButton;
     private final Map<GenreDTO, CheckBox> genreCheckBoxes = new HashMap<>();
     private Popup genrePopup;
 
     //table
-    public Label stats;
+    public HBox stats;
     @FXML
     Table<MangaDTO> mangaTable;
 
@@ -79,8 +83,7 @@ public class MangaViewController {
         mangaTable.addStringColumn("Name", 200, MangaDTO::getName, false, false);
         mangaTable.addStringColumn("Alternativ Name", 200, MangaDTO::getAlternateName, false, false);
         mangaTable.addStringColumn("Location", 200, MangaDTO::getLocation, false, false);
-        mangaTable.addStringColumn("Abgeschlossen", 200, m -> m.isCompleted() ? "Ja" : "Nein", true, false);
-        mangaTable.addStringColumn("Abgebrochen", 200, m -> m.isAborted() ? "Ja" : "Nein", true, false);
+        mangaTable.addStringColumn("Status", 200, m -> m.getState().getDisplayName(), true, false);
         mangaTable.addStringColumn("Genres", 200,
                 m -> String.join(", ", m.getGenres().stream().map(GenreDTO::getName).toList()), false, false);
         mangaTable.addStringColumn("Rating", 200, m -> String.valueOf(m.getRating()), true, false);
@@ -181,13 +184,23 @@ public class MangaViewController {
     }
 
     private void updateStats() {
-        String stringBuilder = "Abgeschlossen: " + (long) mangaList.stream().filter(MangaDTO::isCompleted).toList().size() + "; " +
-                "Abgebrochen: " + (long) mangaList.stream().filter(MangaDTO::isAborted).toList().size() + "; " +
-                "Manga Total: " + (long) mangaList.size() + "; " +
-                "Band Total: " + mangaList.stream()
+        String completed = "Abgeschlossen: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.COMPLETED).toList().size();
+        String aborted = "Abgebrochen: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ABORTED).toList().size();
+        String ongoing = "Laufend: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ONGOING).toList().size();
+        String mangaTotal = "Serien: " + (long) mangaList.size();
+        String volumeTotal = "Total Manga: " + mangaList.stream()
                 .mapToLong(manga -> manga.getVolumes().size())
                 .sum();
-        stats.setText(stringBuilder);
+        Label completedLbl = new Label(completed);
+        Label abortedLbl = new Label(aborted);
+        Label ongoingLbl = new Label(ongoing);
+        Label mangaTotalLbl = new Label(mangaTotal);
+        Label volumeTotalLbl = new Label(volumeTotal);
+        completedLbl.setStyle("-fx-font-weight: bold;");
+        abortedLbl.setStyle("-fx-font-weight: bold;");
+        mangaTotalLbl.setStyle("-fx-font-weight: bold;");
+        volumeTotalLbl.setStyle("-fx-font-weight: bold;");
+        stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, mangaTotalLbl, volumeTotalLbl);
     }
 
     public void loadManga() {
@@ -202,6 +215,7 @@ public class MangaViewController {
         filterField.textProperty().addListener((_, _, _) -> applyFilter());
         completedCb.selectedProperty().addListener((_, _, _) -> applyFilter());
         abortedCb.selectedProperty().addListener((_, _, _) -> applyFilter());
+        ongoingCb.selectedProperty().addListener((_, _, _) -> applyFilter());
     }
 
     private void applyFilter() {
@@ -210,11 +224,14 @@ public class MangaViewController {
         filteredMangas.setPredicate(manga -> {
 
             // Checkbox Filter
-            if (!completedCb.isSelected() && manga.isCompleted()) {
-                return false; // hide completed mangas if box is unchecked
+            if (!completedCb.isSelected() && manga.getState() == MangaState.COMPLETED) {
+                return false;
             }
-            if (!abortedCb.isSelected() && manga.isAborted()) {
-                return false; // hide aborted mangas if box is unchecked
+            if (!abortedCb.isSelected() && manga.getState() == MangaState.ABORTED) {
+                return false;
+            }
+            if (!ongoingCb.isSelected() && manga.getState() == MangaState.ONGOING) {
+                return false;
             }
 
             // Dropdown Genre Filter
@@ -235,7 +252,7 @@ public class MangaViewController {
                 return true;
             if (manga.getName().toLowerCase().contains(filterText))
                 return true;
-            if (manga.getAlternateName().toLowerCase().contains(filterText))
+            if (manga.getAlternateName() != null && manga.getAlternateName().toLowerCase().contains(filterText))
                 return true;
             if (manga.getVolumes() != null) {
                 for (VolumeDTO volume : manga.getVolumes()) {
@@ -261,12 +278,12 @@ public class MangaViewController {
                 .filter(m -> m.getId() == mangaId)
                 .findFirst()
                 .orElse(null);
-        if(manga != null) {
+        if (manga != null) {
             VolumeDTO lastVolume = manga.getVolumes().stream().max(Comparator.comparingInt(VolumeDTO::getVolume))
                     .orElse(null);
-            if(lastVolume != null) {
+            if (lastVolume != null) {
                 volume.setArc(lastVolume.getArc());
-                volume.setVolume(lastVolume.getVolume()+1);
+                volume.setVolume(lastVolume.getVolume() + 1);
                 volume.setNote(lastVolume.getNote());
                 volume.setMangaId(mangaId);
                 volumeService.saveVolume(volume);

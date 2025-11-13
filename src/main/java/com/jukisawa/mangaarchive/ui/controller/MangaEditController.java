@@ -2,12 +2,11 @@ package com.jukisawa.mangaarchive.ui.controller;
 
 import com.jukisawa.mangaarchive.dto.GenreDTO;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
+import com.jukisawa.mangaarchive.dto.MangaState;
 import com.jukisawa.mangaarchive.service.MangaService;
 import com.jukisawa.mangaarchive.util.ImageUtils;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Dragboard;
@@ -34,9 +33,7 @@ public class MangaEditController {
     @FXML
     private TextField locationField;
     @FXML
-    private CheckBox completedCb;
-    @FXML
-    private CheckBox abortedCb;
+    private ComboBox<MangaState> stateDropdown;
     @FXML
     private TilePane genreContainer;
     @FXML
@@ -79,6 +76,23 @@ public class MangaEditController {
         ratingField.setTextFormatter(formatter);
 
         setupCoverArea();
+
+        stateDropdown.getItems().setAll(MangaState.values());
+
+        stateDropdown.setCellFactory(cb -> new ListCell<>() {
+            @Override
+            protected void updateItem(MangaState item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getDisplayName());
+            }
+        });
+        stateDropdown.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(MangaState item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getDisplayName());
+            }
+        });
     }
 
     public void setService(MangaService mangaService) {
@@ -105,8 +119,7 @@ public class MangaEditController {
         if (manga != null) {
             nameField.setText(manga.getName());
             locationField.setText(manga.getLocation());
-            completedCb.setSelected(manga.isCompleted());
-            abortedCb.setSelected(manga.isAborted());
+            stateDropdown.setValue(manga.getState());
             ratingField.setText(String.valueOf(manga.getRating()));
             relatedField.setText(manga.getRelated());
             alternateNameField.setText(manga.getAlternateName());
@@ -143,8 +156,7 @@ public class MangaEditController {
 
         manga.setName(nameField.getText());
         manga.setLocation(locationField.getText());
-        manga.setCompleted(completedCb.isSelected());
-        manga.setAborted(abortedCb.isSelected());
+        manga.setState(stateDropdown.getValue());
         manga.setRating(Integer.parseInt(ratingField.getText()));
         manga.setRelated(relatedField.getText());
         manga.setAlternateName(alternateNameField.getText());

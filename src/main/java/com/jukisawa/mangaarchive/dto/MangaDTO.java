@@ -6,8 +6,7 @@ public class MangaDTO {
     private int id;
     private String name;
     private String location;
-    private boolean completed;
-    private boolean aborted;
+    private MangaState state;
     private List<GenreDTO> genres;
     private int rating;
     private List<VolumeDTO> volumes;
@@ -15,14 +14,13 @@ public class MangaDTO {
     private String related;
     private String alternateName;
 
-    public MangaDTO(int id, String name, String location, boolean completed, boolean aborted, List<GenreDTO> genres,
+    public MangaDTO(int id, String name, String location, MangaState state, List<GenreDTO> genres,
                     int rating,
                     List<VolumeDTO> volumes, byte[] coverImage, String related, String alternateName) {
         this.id = id;
         this.name = name;
         this.location = location;
-        this.completed = completed;
-        this.aborted = aborted;
+        this.state = state;
         this.genres = genres;
         this.rating = rating;
         this.volumes = volumes;
@@ -56,22 +54,6 @@ public class MangaDTO {
 
     public void setLocation(String location) {
         this.location = location;
-    }
-
-    public boolean isCompleted() {
-        return completed;
-    }
-
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
-    }
-
-    public boolean isAborted() {
-        return aborted;
-    }
-
-    public void setAborted(boolean aborted) {
-        this.aborted = aborted;
     }
 
     public List<GenreDTO> getGenres() {
@@ -120,5 +102,13 @@ public class MangaDTO {
 
     public void setAlternateName(String alternateName) {
         this.alternateName = alternateName;
+    }
+
+    public MangaState getState() {
+        return state;
+    }
+
+    public void setState(MangaState state) {
+        this.state = state;
     }
 }

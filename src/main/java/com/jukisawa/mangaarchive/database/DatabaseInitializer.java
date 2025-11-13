@@ -19,8 +19,7 @@ public class DatabaseInitializer {
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         name TEXT NOT NULL,
                         location TEXT NOT NULL,
-                        completed INTEGER NOT NULL,
-                        aborted INTEGER NOT NULL,
+                        state TEXT NOT NULL,
                         rating INTEGER NOT NULL
                     );
                 """;
