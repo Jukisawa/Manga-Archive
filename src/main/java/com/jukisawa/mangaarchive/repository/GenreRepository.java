@@ -27,7 +27,7 @@ public class GenreRepository {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    GenreDTO genreDTO = new GenreDTO(rs.getInt(1), rs.getString(2));
+                    GenreDTO genreDTO = new GenreDTO(rs.getInt("id"), rs.getString("name"));
                     result.add(genreDTO);
                 }
             }
@@ -39,7 +39,7 @@ public class GenreRepository {
     }
 
     public void addGenre(GenreDTO genreDTO) {
-        String insertVolume = "INSERT INTO genres (name) VALUES (?)";
+        String insertVolume = "INSERT INTO genre (name) VALUES (?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertVolume, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, genreDTO.getName());
             pstmt.executeUpdate();
@@ -53,7 +53,7 @@ public class GenreRepository {
     }
 
     public void updateGenre(GenreDTO genreDTO) {
-        String updateManga = "UPDATE genres set name = ? WHERE id = ?";
+        String updateManga = "UPDATE genre set name = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
             pstmt.setString(1, genreDTO.getName());
             pstmt.setInt(2, genreDTO.getId());

@@ -1,10 +1,8 @@
 package com.jukisawa.mangaarchive.ui.controller;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,11 +12,13 @@ import com.jukisawa.mangaarchive.dto.VolumeDTO;
 import com.jukisawa.mangaarchive.service.GenreService;
 import com.jukisawa.mangaarchive.service.MangaService;
 import com.jukisawa.mangaarchive.service.VolumeService;
+import com.jukisawa.mangaarchive.ui.components.HoverPopup;
 import com.jukisawa.mangaarchive.ui.components.Table;
 import com.jukisawa.mangaarchive.util.StageIconHelper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -26,8 +26,12 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -35,6 +39,11 @@ import javafx.stage.Stage;
 public class MangaViewController {
     private static final Logger LOGGER = Logger.getLogger(MangaViewController.class.getName());
 
+    //action
+    @FXML
+    public Button openGenreEditorButton;
+
+    //filter
     @FXML
     private TextField filterField;
     @FXML
@@ -45,6 +54,9 @@ public class MangaViewController {
     private Button genreFilterButton;
     private final Map<GenreDTO, CheckBox> genreCheckBoxes = new HashMap<>();
     private Popup genrePopup;
+
+    //table
+    public Label stats;
     @FXML
     Table<MangaDTO> mangaTable;
 
@@ -65,6 +77,7 @@ public class MangaViewController {
     @FXML
     public void initialize() {
         mangaTable.addStringColumn("Name", 200, MangaDTO::getName, false, false);
+        mangaTable.addStringColumn("Alternativ Name", 200, MangaDTO::getAlternateName, false, false);
         mangaTable.addStringColumn("Location", 200, MangaDTO::getLocation, false, false);
         mangaTable.addStringColumn("Abgeschlossen", 200, m -> m.isCompleted() ? "Ja" : "Nein", true, false);
         mangaTable.addStringColumn("Abgebrochen", 200, m -> m.isAborted() ? "Ja" : "Nein", true, false);
@@ -73,8 +86,27 @@ public class MangaViewController {
         mangaTable.addStringColumn("Rating", 200, m -> String.valueOf(m.getRating()), true, false);
         mangaTable.addActionColumn(
                 this::onAddMangaClicked,
-                this::onEditMangaClicked);
+                this::onEditMangaClicked, null);
 
+        //hover part
+        HoverPopup<MangaDTO> hoverPopup = new HoverPopup<>(manga -> {
+            VBox hoverBox = new VBox(5);
+            if (manga.getCoverImage() != null) {
+                ImageView img = new ImageView(new Image(new ByteArrayInputStream(manga.getCoverImage())));
+                img.setFitWidth(150);
+                img.setPreserveRatio(true);
+                hoverBox.getChildren().add(img);
+            }
+
+            String relatedText = manga.getRelated() == null ? "" : manga.getRelated();
+            Label related = new Label("Related: " + relatedText);
+            hoverBox.getChildren().add(related);
+
+            return hoverBox;
+        });
+        mangaTable.setHoverPopup(hoverPopup);
+
+        //nested table
         mangaTable.setNestedTableProvider(manga -> {
             Table<VolumeDTO> volumeTable = new Table<>();
             volumeTable.addStringColumn("Band", 100, v -> String.valueOf(v.getVolume()), true, false);
@@ -82,16 +114,20 @@ public class MangaViewController {
             volumeTable.addStringColumn("Notiz", 200, VolumeDTO::getNote, false, false);
             volumeTable.addActionColumn(
                     () -> onAddVolumeClicked(manga.getId()),
-                    this::onEditVolumeClicked);
+                    this::onEditVolumeClicked, () -> onAddShiftVolumeClicked(manga.getId()));
 
-
-            ObservableList<VolumeDTO> observableVolumes = FXCollections.observableArrayList(manga.getVolumes());
-            volumeTable.setItems(observableVolumes);
+            ObservableList<VolumeDTO> observableVolumes =
+                    nestedVolumeMap.computeIfAbsent(manga.getId(),
+                            _ -> FXCollections.observableArrayList(manga.getVolumes()));
+            SortedList<VolumeDTO> sortedVolumes = new SortedList<>(observableVolumes);
+            volumeTable.setItems(sortedVolumes);
 
             // store for later updates
             nestedVolumeMap.put(manga.getId(), observableVolumes);
             return volumeTable;
         });
+
+        openGenreEditorButton.setOnAction(_ -> openGenreEditor());
 
         setupFilter();
     }
@@ -100,6 +136,7 @@ public class MangaViewController {
         loadManga();
         initGenrePopup();
         setupFilter();
+        updateStats();
     }
 
     private void initGenrePopup() {
@@ -143,11 +180,22 @@ public class MangaViewController {
         });
     }
 
+    private void updateStats() {
+        String stringBuilder = "Abgeschlossen: " + (long) mangaList.stream().filter(MangaDTO::isCompleted).toList().size() + "; " +
+                "Abgebrochen: " + (long) mangaList.stream().filter(MangaDTO::isAborted).toList().size() + "; " +
+                "Manga Total: " + (long) mangaList.size() + "; " +
+                "Band Total: " + mangaList.stream()
+                .mapToLong(manga -> manga.getVolumes().size())
+                .sum();
+        stats.setText(stringBuilder);
+    }
+
     public void loadManga() {
         List<MangaDTO> mangas = mangaService.getAllMangas();
         mangaList = FXCollections.observableArrayList(mangas);
         filteredMangas = new FilteredList<>(mangaList, _ -> true);
-        mangaTable.setItems(filteredMangas);
+        SortedList<MangaDTO> sortedMangas = new SortedList<>(filteredMangas);
+        mangaTable.setItems(sortedMangas);
     }
 
     private void setupFilter() {
@@ -162,10 +210,12 @@ public class MangaViewController {
         filteredMangas.setPredicate(manga -> {
 
             // Checkbox Filter
-            if (manga.isCompleted() && !completedCb.isSelected())
-                return false;
-            if (!manga.isAborted() && !abortedCb.isSelected())
-                return false;
+            if (!completedCb.isSelected() && manga.isCompleted()) {
+                return false; // hide completed mangas if box is unchecked
+            }
+            if (!abortedCb.isSelected() && manga.isAborted()) {
+                return false; // hide aborted mangas if box is unchecked
+            }
 
             // Dropdown Genre Filter
             List<GenreDTO> selectedGenreDTOs = genreCheckBoxes.entrySet().stream()
@@ -174,7 +224,7 @@ public class MangaViewController {
                     .toList();
 
             if (!selectedGenreDTOs.isEmpty()) {
-                boolean genreMatch = manga.getGenres().stream().anyMatch(selectedGenreDTOs::contains);
+                boolean genreMatch = new HashSet<>(manga.getGenres()).containsAll(selectedGenreDTOs);
                 if (!genreMatch) {
                     return false;
                 }
@@ -184,6 +234,8 @@ public class MangaViewController {
             if (filterText.isEmpty())
                 return true;
             if (manga.getName().toLowerCase().contains(filterText))
+                return true;
+            if (manga.getAlternateName().toLowerCase().contains(filterText))
                 return true;
             if (manga.getVolumes() != null) {
                 for (VolumeDTO volume : manga.getVolumes()) {
@@ -200,35 +252,58 @@ public class MangaViewController {
     private void onAddVolumeClicked(int mangaId) {
         VolumeDTO volume = new VolumeDTO();
         volume.setMangaId(mangaId);
-        openVolumePopup(volume);
+        openVolumeEditor(volume);
+    }
+
+    private void onAddShiftVolumeClicked(int mangaId) {
+        VolumeDTO volume = new VolumeDTO();
+        MangaDTO manga = mangaList.stream()
+                .filter(m -> m.getId() == mangaId)
+                .findFirst()
+                .orElse(null);
+        if(manga != null) {
+            VolumeDTO lastVolume = manga.getVolumes().stream().max(Comparator.comparingInt(VolumeDTO::getVolume))
+                    .orElse(null);
+            if(lastVolume != null) {
+                volume.setArc(lastVolume.getArc());
+                volume.setVolume(lastVolume.getVolume()+1);
+                volume.setNote(lastVolume.getNote());
+                volume.setMangaId(mangaId);
+                volumeService.saveVolume(volume);
+                nestedVolumeMap.get(manga.getId()).add(volume);
+                manga.getVolumes().add(volume);
+                updateStats();
+            }
+        }
+
     }
 
     private void onEditVolumeClicked(VolumeDTO volume) {
-        openVolumePopup(volume);
+        openVolumeEditor(volume);
     }
 
-    private void openVolumePopup(VolumeDTO volume) {
+    private void openVolumeEditor(VolumeDTO volume) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/VolumePopup.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/VolumeEdit.fxml"));
             Parent root = loader.load();
 
-            VolumePopupController controller = loader.getController();
+            VolumeEditController controller = loader.getController();
             controller.setService(volumeService);
             controller.setVolume(volume);
 
-            Scene popupScene = new Scene(root);
-            popupScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
 
-            Stage popupStage = new Stage();
-            popupStage.setTitle(volume.getId() == 0 ? "Neuer Band erfassen" : "Band bearbeiten");
-            popupStage.setScene(popupScene);
-            popupStage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
-            popupStage.setResizable(false);
-            popupStage.getIcons().addAll(StageIconHelper.getIcons());
+            Stage stage = new Stage();
+            stage.setTitle(volume.getId() == 0 ? "Neuer Band erfassen" : "Band bearbeiten");
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
+            stage.setResizable(false);
+            stage.getIcons().addAll(StageIconHelper.getIcons());
 
             // Optional Höhe dynamisch anpassen
-            popupStage.sizeToScene();
-            popupStage.showAndWait();
+            stage.sizeToScene();
+            stage.showAndWait();
 
             if (controller.isSaved()) {
                 VolumeDTO savedVolume = controller.getVolumeDTO();
@@ -245,6 +320,7 @@ public class MangaViewController {
                         observableVolumes.setAll(manga.getVolumes());
                     }
                 }
+                updateStats();
             }
 
         } catch (IOException e) {
@@ -253,43 +329,74 @@ public class MangaViewController {
     }
 
     private void onAddMangaClicked() {
-        openMangaPopup(null);
+        openMangaEditor(null);
     }
 
     private void onEditMangaClicked(MangaDTO manga) {
-        openMangaPopup(manga);
+        openMangaEditor(manga);
     }
 
-    private void openMangaPopup(MangaDTO manga) {
+    private void openMangaEditor(MangaDTO manga) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/MangaPopup.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/MangaEdit.fxml"));
             Parent root = loader.load();
 
-            MangaPopupController controller = loader.getController();
+            MangaEditController controller = loader.getController();
             controller.setService(mangaService);
             controller.setGenres(genreService.getAllGenres());
             controller.setManga(manga);
 
-            Scene popupScene = new Scene(root);
-            popupScene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
 
-            Stage popupStage = new Stage();
+            Stage stage = new Stage();
             boolean newManga = manga == null;
-            popupStage.setTitle(newManga ? "Neuer Manga erfassen" : "Manga bearbeiten");
-            popupStage.setScene(popupScene);
-            popupStage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
-            popupStage.setResizable(false);
-            popupStage.getIcons().addAll(StageIconHelper.getIcons());
+            stage.setTitle(newManga ? "Neuer Manga erfassen" : "Manga bearbeiten");
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
+            stage.setResizable(false);
+            stage.getIcons().addAll(StageIconHelper.getIcons());
 
             // Optional Höhe dynamisch anpassen
-            popupStage.sizeToScene();
-            popupStage.showAndWait();
+            stage.sizeToScene();
+            stage.showAndWait();
 
             if (controller.isSaved()) {
                 if (newManga) {
                     mangaList.add(controller.getMangaDTO());
                 }
+                updateStats();
             }
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim laden von resourcen", e);
+        }
+    }
+
+    private void openGenreEditor() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/GenreEdit.fxml"));
+            Parent root = loader.load();
+
+            GenreEditController controller = loader.getController();
+            controller.setService(genreService);
+            controller.postInit();
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
+
+            Stage stage = new Stage();
+            stage.setTitle("Genre bearbeiten");
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
+            stage.setResizable(false);
+            stage.getIcons().addAll(StageIconHelper.getIcons());
+
+            // Optional Höhe dynamisch anpassen
+            stage.sizeToScene();
+            stage.showAndWait();
+
+            initGenrePopup();
 
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim laden von resourcen", e);

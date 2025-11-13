@@ -1,14 +1,7 @@
 package com.jukisawa.mangaarchive.ui.components;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -18,6 +11,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 /**
  * Eine generische Tabelle mit Filter und Nested Tables.
  */
@@ -26,8 +25,9 @@ public class Table<T> extends VBox {
     private final VBox tableBody = new VBox();
     private final HBox header;
     private final List<Column<T>> columns = new ArrayList<>();
-    private ObservableList<T> items = FXCollections.observableArrayList();
+    private SortedList<T> items;
     private Function<T, Node> nestedTableProvider;
+    private HoverPopup<T> hoverPopup;
 
     private boolean ascending = true;
     private Column<T> lastSortedColumn = null;
@@ -59,8 +59,18 @@ public class Table<T> extends VBox {
 
     public void addStringColumn(String title, int minWidth, Function<T, String> valueProvider, boolean centerContent,
                                 boolean centerHeader) {
-        addStringColumn(title, minWidth, valueProvider, t -> valueProvider.apply(t).toLowerCase(), centerContent,
-                centerHeader);
+        addStringColumn(
+                title,
+                minWidth,
+                valueProvider,
+                t -> {
+                    if (t == null) return "";
+                    String val = valueProvider.apply(t);
+                    return val != null ? val.toLowerCase() : "";
+                },
+                centerContent,
+                centerHeader
+        );
     }
 
     public void addStringColumn(String title, int width, Function<T, String> valueProvider,
@@ -76,14 +86,14 @@ public class Table<T> extends VBox {
         }, sortKeyExtractor, centerContent, centerHeader);
     }
 
-    public void addActionColumn(Runnable onAdd, Consumer<T> onEdit) {
+    public void addActionColumn(Runnable onAdd, Consumer<T> onEdit, Runnable onShiftAdd) {
         columns.add(new Column<>("Aktion", 80, t -> {
             Button editBtn = new Button();
             editBtn.setGraphic(createEditIcon());
             editBtn.setOnAction(_ -> onEdit.accept(t));
             editBtn.setStyle("-fx-background-color: transparent;");
             return editBtn;
-        }, onAdd, null, true));
+        }, onAdd, null, true, onShiftAdd));
         updateHeader();
         refresh();
     }
@@ -95,12 +105,12 @@ public class Table<T> extends VBox {
 
     public void addNodeColumn(String title, int width, Function<T, Node> nodeProvider, Function<T, String> sortKey,
                               boolean centerContent, boolean centerHeader) {
-        columns.add(new Column<>(title, width, nodeProvider, null, sortKey, centerHeader));
+        columns.add(new Column<>(title, width, nodeProvider, null, sortKey, centerHeader, null));
         updateHeader();
         refresh();
     }
 
-    public void setItems(ObservableList<T> items) {
+    public void setItems(SortedList<T> items) {
         // remove old listener if any
         if (this.items != null) {
             this.items.removeListener(listChangeListener);
@@ -150,6 +160,10 @@ public class Table<T> extends VBox {
         }
     }
 
+    public void setHoverPopup(HoverPopup<T> hoverPopup) {
+        this.hoverPopup = hoverPopup;
+    }
+
     private void sortByColumn(Column<T> col) {
         if (col.sortKeyExtractor == null)
             return;
@@ -183,7 +197,7 @@ public class Table<T> extends VBox {
             comparator = comparator.reversed();
         }
 
-        FXCollections.sort(items, comparator);
+        items.setComparator(comparator);
         refresh();
     }
 
@@ -193,7 +207,13 @@ public class Table<T> extends VBox {
             if (col.headerAction != null) {
                 Button addBtn = new Button();
                 addBtn.setGraphic(createPlusIcon());
-                addBtn.setOnAction(_ -> col.headerAction.run());
+                addBtn.setOnMouseClicked(event -> {
+                    if (event.isShiftDown() && col.headerShiftAction != null) {
+                        col.headerShiftAction.run();
+                    } else if (col.headerAction != null) {
+                        col.headerAction.run();
+                    }
+                });
                 addBtn.setPrefWidth(col.currentWidth);
                 addBtn.setMinWidth(col.minWidth);
                 addBtn.setStyle("-fx-background-color: transparent;");
@@ -247,7 +267,7 @@ public class Table<T> extends VBox {
 
     private void refresh() {
         tableBody.getChildren().clear();
-
+        if (items == null) return;
         for (T t : items) {
             HBox row = new HBox();
             row.getStyleClass().add("table-row");
@@ -255,8 +275,13 @@ public class Table<T> extends VBox {
             for (Column<T> col : columns) {
                 Node cell = col.nodeProvider.apply(t);
                 cell.getStyleClass().add("table-cell");
-                cell.prefWidth(col.currentWidth);
                 row.getChildren().add(cell);
+
+                // Hover logic
+                if(col.headerAction == null && hoverPopup != null) {
+                    cell.setOnMouseEntered(_ -> hoverPopup.showFor(t, row));
+                    cell.setOnMouseExited(_ -> hoverPopup.hide());
+                }
             }
 
             // Row über Nested Table
@@ -299,16 +324,18 @@ public class Table<T> extends VBox {
         Function<T, Node> nodeProvider;
         Function<T, String> sortKeyExtractor;
         Runnable headerAction;
+        Runnable headerShiftAction;
         boolean centerHeader;
 
         Column(String title, double minWidth, Function<T, Node> nodeProvider, Runnable headerAction,
-               Function<T, String> sortKeyExtractor, boolean centerHeader) {
+               Function<T, String> sortKeyExtractor, boolean centerHeader, Runnable headerShiftAction) {
             this.title = title;
             this.minWidth = minWidth;
             this.nodeProvider = nodeProvider;
             this.sortKeyExtractor = sortKeyExtractor;
             this.headerAction = headerAction;
             this.centerHeader = centerHeader;
+            this.headerShiftAction = headerShiftAction;
         }
     }
 }

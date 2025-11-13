@@ -1,9 +1,10 @@
 package com.jukisawa.mangaarchive.database;
 
+import com.jukisawa.mangaarchive.util.SQLiteSchemaUtil;
+
 import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -74,7 +75,7 @@ public class DatabaseInitializer {
                  ('Thriller'),
                  ('Tragedy'),
                  ('Wuxia'),
-                 ('ThemeAliens'),
+                 ('Aliens'),
                  ('Animals'),
                  ('Cooking'),
                  ('Crossdressing'),
@@ -129,15 +130,14 @@ public class DatabaseInitializer {
             stmt.execute(createGenreTbl);
             stmt.execute(createMangaGenreTbl);
             stmt.execute(createVolumeTbl);
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS count FROM Genre");
-            boolean addGenres = false;
-            rs.next();
-            if (rs.getInt("count") == 0) {
-                addGenres = true;
-            }
-            if (addGenres) {
-                stmt.execute(insertGenres);
-            }
+            // Add default genres if needed
+            SQLiteSchemaUtil.insertIfEmpty(conn, "genre", insertGenres);
+
+            // Add missing columns
+            SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "cover_image", "BLOB");
+            SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "related", "TEXT");
+            SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "alternate_name", "TEXT");
+
 
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim Db Initialisieren", e);

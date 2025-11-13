@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.image.ImageView?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.jukisawa.mangaarchive.ui.controller.MangaEditController"
+            prefWidth="1400" prefHeight="300"
+            style="-fx-background-color: #2b2b2b; -fx-padding: 15; -fx-background-radius: 10;">
+
+    <center>
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <TextField fx:id="nameField" promptText="Name"/>
+            <TextField fx:id="locationField" promptText="Location"/>
+            <CheckBox fx:id="completedCb" text="Abgeschlossen"/>
+            <CheckBox fx:id="abortedCb" text="Abgebrochen"/>
+            <Label text="Genre auswählen:"
+                   style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
+            <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" minHeight="300" maxHeight="300">
+                <TilePane fx:id="genreContainer" hgap="10" vgap="10" prefColumns="10"
+                          tileAlignment="TOP_LEFT"/>
+            </ScrollPane>
+            <TextField fx:id="ratingField" promptText="Bewertung (1-10)"/>
+            <Label text="Cover:"
+                   style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <StackPane fx:id="coverContainer"
+                           prefWidth="200" prefHeight="270"
+                           style="-fx-border-color: #666; -fx-border-width: 1; -fx-alignment: center;">
+                    <ImageView fx:id="coverImageView"
+                               fitWidth="180" fitHeight="240"
+                               preserveRatio="true"/>
+                    <Label text="Drag image here"/>
+                </StackPane>
+
+                <Button text="🗑"
+                        style="-fx-background-color: transparent; -fx-text-fill: red; -fx-font-size: 18px;"
+                        onAction="#onDeleteCover"/>
+            </HBox>
+
+            <TextField fx:id="relatedField" promptText="Abhängigkeiten"/>
+            <TextField fx:id="alternateNameField" promptText="Alternative Namen"/>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+            <Button text="Abbrechen" onAction="#onCancel"
+                    style="-fx-background-color: #444; -fx-text-fill: white;"/>
+            <Button text="Speichern" onAction="#onSave"
+                    style="-fx-background-color: #3a6ea5; -fx-text-fill: white;"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

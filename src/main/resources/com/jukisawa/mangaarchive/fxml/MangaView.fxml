@@ -5,18 +5,42 @@
 <?import com.jukisawa.mangaarchive.ui.components.Table?>
 <?import javafx.scene.control.*?>
 
+<?import javafx.geometry.Insets?>
 <VBox xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.jukisawa.mangaarchive.ui.controller.MangaViewController" spacing="10">
+      fx:controller="com.jukisawa.mangaarchive.ui.controller.MangaViewController" spacing="10" maxHeight="1000">
+
+    <!-- Action Bereich -->
+    <VBox spacing="5">
+        <padding>
+            <Insets top="10" bottom="10" left="10" right="10"/>
+        </padding>
+        <Label text="Aktionen" style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="openGenreEditorButton" text="Genre bearbeiten/neu"/>
+        </HBox>
+    </VBox>
 
     <!-- Filterbereich -->
-    <HBox prefHeight="100" alignment="CENTER_LEFT" spacing="10">
-        <TextField fx:id="filterField" promptText="Suche..." />
-        <CheckBox fx:id="completedCb" text="Abgeschlossen" selected="true" />
-        <CheckBox fx:id="abortedCb" text="Abgebrochen" selected="true" />
-        <Button fx:id="genreFilterButton" text="Genre auswählen" />
-    </HBox>
+    <VBox spacing="5">
+        <padding>
+            <Insets top="10" bottom="10" left="10" right="10"/>
+        </padding>
+        <Label text="Filter" style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <TextField fx:id="filterField" promptText="Suche..."/>
+            <CheckBox fx:id="completedCb" text="Abgeschlossen" selected="true"/>
+            <CheckBox fx:id="abortedCb" text="Abgebrochen" selected="true"/>
+            <Button fx:id="genreFilterButton" text="Genre auswählen"/>
+        </HBox>
+    </VBox>
 
     <!-- manga Tabelle -->
+    <HBox>
+        <padding>
+            <Insets left="10" right="10"/>
+        </padding>
+        <Label fx:id="stats" styleClass="table-header"/>
+    </HBox>
     <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER">
         <Table fx:id="mangaTable"/>
     </ScrollPane>

@@ -1,23 +1,33 @@
 package com.jukisawa.mangaarchive.ui.controller;
 
+import com.jukisawa.mangaarchive.dto.GenreDTO;
+import com.jukisawa.mangaarchive.dto.MangaDTO;
+import com.jukisawa.mangaarchive.service.MangaService;
+import com.jukisawa.mangaarchive.util.ImageUtils;
+import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.TilePane;
+import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.jukisawa.mangaarchive.dto.GenreDTO;
-import com.jukisawa.mangaarchive.dto.MangaDTO;
-import com.jukisawa.mangaarchive.service.MangaService;
-import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
-import javafx.scene.layout.TilePane;
-import javafx.stage.Stage;
-import javafx.util.converter.IntegerStringConverter;
-
-public class MangaPopupController {
+public class MangaEditController {
+    private static final Logger LOGGER = Logger.getLogger(MangaEditController.class.getName());
 
     @FXML
     private TextField nameField;
@@ -31,11 +41,20 @@ public class MangaPopupController {
     private TilePane genreContainer;
     @FXML
     private TextField ratingField;
+    @FXML
+    private StackPane coverContainer;
+    @FXML
+    private ImageView coverImageView;
+    @FXML
+    private TextField relatedField;
+    @FXML
+    private TextField alternateNameField;
 
     private MangaDTO manga;
     private boolean saved;
     private List<GenreDTO> allGenres = new ArrayList<>();
     private final Map<GenreDTO, CheckBox> genreCheckboxes = new HashMap<>();
+    private byte[] coverBytes;
 
     private MangaService mangaService;
 
@@ -58,6 +77,8 @@ public class MangaPopupController {
 
         TextFormatter<Integer> formatter = new TextFormatter<>(new IntegerStringConverter(), null, filter);
         ratingField.setTextFormatter(formatter);
+
+        setupCoverArea();
     }
 
     public void setService(MangaService mangaService) {
@@ -87,13 +108,19 @@ public class MangaPopupController {
             completedCb.setSelected(manga.isCompleted());
             abortedCb.setSelected(manga.isAborted());
             ratingField.setText(String.valueOf(manga.getRating()));
-        }
+            relatedField.setText(manga.getRelated());
+            alternateNameField.setText(manga.getAlternateName());
+            if (manga.getGenres() != null) {
+                for (GenreDTO genre : manga.getGenres()) {
+                    CheckBox cb = genreCheckboxes.get(genre);
+                    if (cb != null)
+                        cb.setSelected(true);
+                }
+            }
 
-        if (manga != null && manga.getGenres() != null) {
-            for (GenreDTO genre : manga.getGenres()) {
-                CheckBox cb = genreCheckboxes.get(genre);
-                if (cb != null)
-                    cb.setSelected(true);
+            if (manga.getCoverImage() != null) {
+                coverImageView.setImage(ImageUtils.bytesToImage(manga.getCoverImage()));
+                coverBytes = manga.getCoverImage();
             }
         }
     }
@@ -119,6 +146,12 @@ public class MangaPopupController {
         manga.setCompleted(completedCb.isSelected());
         manga.setAborted(abortedCb.isSelected());
         manga.setRating(Integer.parseInt(ratingField.getText()));
+        manga.setRelated(relatedField.getText());
+        manga.setAlternateName(alternateNameField.getText());
+
+        if (coverBytes != null) {
+            manga.setCoverImage(coverBytes);
+        }
 
         List<GenreDTO> selectedGenres = genreCheckboxes.entrySet().stream()
                 .filter(e -> e.getValue().isSelected())
@@ -140,6 +173,48 @@ public class MangaPopupController {
     private void closeWindow() {
         Stage stage = (Stage) nameField.getScene().getWindow();
         stage.close();
+    }
+
+    private void setupCoverArea() {
+        coverContainer.setOnDragOver(event -> {
+            if (event.getDragboard().hasImage() || event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(TransferMode.COPY);
+            }
+            event.consume();
+        });
+
+        coverContainer.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            Image image = null;
+
+            try {
+                if (db.hasImage()) {
+                    image = db.getImage();
+                } else if (db.hasFiles()) {
+                    File file = db.getFiles().getFirst();
+                    image = new Image(file.toURI().toString());
+                }
+
+                if (image != null) {
+                    Image resized = ImageUtils.resizeImage(image);
+                    coverImageView.setImage(resized);
+                    coverBytes = ImageUtils.imageToBytes(resized);
+                    success = true;
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Fehler beim speichern des Covers.", e);
+            }
+
+            event.setDropCompleted(success);
+            event.consume();
+        });
+    }
+
+    @FXML
+    private void onDeleteCover() {
+        coverImageView.setImage(null);
+        if (manga != null) manga.setCoverImage(null);
     }
 
 }

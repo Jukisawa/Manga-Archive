@@ -58,7 +58,7 @@ public class MangaGenreRepository {
             }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    MangaGenreDTO mangaGenreDTO = new MangaGenreDTO(rs.getInt(1), rs.getInt(2));
+                    MangaGenreDTO mangaGenreDTO = new MangaGenreDTO(rs.getInt("manga_id"), rs.getInt("genre_id"));
                     result.add(mangaGenreDTO);
                 }
             }

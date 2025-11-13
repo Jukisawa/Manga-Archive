@@ -36,9 +36,9 @@ public class MainApplication extends Application {
         VolumeRepository volumeRepository = new VolumeRepository(connection);
 
         // Services erstellen
-        MangaService mangaService = new MangaService(kundeRepository, mangaGenreRepository, genreRepository,
-                volumeRepository);
         GenreService genreService = new GenreService(genreRepository);
+        MangaService mangaService = new MangaService(kundeRepository, mangaGenreRepository, genreService,
+                volumeRepository);
         VolumeService volumeService = new VolumeService(volumeRepository);
 
         try {

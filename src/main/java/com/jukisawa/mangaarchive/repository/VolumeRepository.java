@@ -38,8 +38,8 @@ public class VolumeRepository {
             }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    VolumeDTO volumeDTO = new VolumeDTO(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getString(4),
-                            rs.getString(5));
+                    VolumeDTO volumeDTO = new VolumeDTO(rs.getInt("id"), rs.getInt("manga_id"), rs.getInt("volume"), rs.getString("arc"),
+                            rs.getString("note"));
                     result.add(volumeDTO);
                 }
             }

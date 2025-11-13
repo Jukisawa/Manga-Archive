@@ -4,7 +4,6 @@ import com.jukisawa.mangaarchive.dto.GenreDTO;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
 import com.jukisawa.mangaarchive.dto.MangaGenreDTO;
 import com.jukisawa.mangaarchive.dto.VolumeDTO;
-import com.jukisawa.mangaarchive.repository.GenreRepository;
 import com.jukisawa.mangaarchive.repository.MangaGenreRepository;
 import com.jukisawa.mangaarchive.repository.MangaRepository;
 import com.jukisawa.mangaarchive.repository.VolumeRepository;
@@ -13,22 +12,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
 public class MangaService {
     private final MangaRepository mangaRepository;
     private final MangaGenreRepository mangaGenreRepository;
-    private final GenreRepository genreRepository;
+    private final GenreService genreService;
     private final VolumeRepository volumeRepository;
 
     public MangaService(MangaRepository mangaRepository, MangaGenreRepository mangaGenreRepository,
-            GenreRepository genreRepository,
+                        GenreService genreService,
             VolumeRepository volumeRepository) {
         this.mangaRepository = mangaRepository;
         this.mangaGenreRepository = mangaGenreRepository;
-        this.genreRepository = genreRepository;
+        this.genreService = genreService;
         this.volumeRepository = volumeRepository;
     }
 
@@ -52,23 +50,19 @@ public class MangaService {
 
         List<MangaGenreDTO> mangaGenreDTOs = mangaGenreRepository.getByMangaIds(mangaIds);
         List<VolumeDTO> volumeDTOs = volumeRepository.getByMangaIds(mangaIds);
-        List<GenreDTO> genreDTOs = genreRepository.getAll();
-
 
         Map<Integer, List<VolumeDTO>> volumeMap = volumeDTOs.stream()
                 .collect(Collectors.groupingBy(VolumeDTO::getMangaId));
 
-        Map<Integer, GenreDTO> genreById = genreDTOs.stream()
-                .collect(Collectors.toMap(GenreDTO::getId, Function.identity()));
         Map<Integer, List<GenreDTO>> mangaGenreMap = new HashMap<>();
 
         for (MangaGenreDTO rel : mangaGenreDTOs) {
-            int kundeId = rel.getMangaId();
-            int typId = rel.getGenreId();
+            int mangaId = rel.getMangaId();
+            int genreId = rel.getGenreId();
 
-            GenreDTO typ = genreById.get(typId);
+            GenreDTO typ = genreService.getGenreById(genreId);
             if (typ != null) {
-                mangaGenreMap.computeIfAbsent(kundeId, _ -> new ArrayList<>()).add(typ);
+                mangaGenreMap.computeIfAbsent(mangaId, _ -> new ArrayList<>()).add(typ);
             }
         }
 

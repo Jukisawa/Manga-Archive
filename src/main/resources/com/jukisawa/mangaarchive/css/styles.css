@@ -160,6 +160,9 @@
     -fx-padding: 15;
 }
 
+
+
+/* ===== Scrollbar Styling ===== */
 .scroll-pane {
     -fx-background-color: transparent;
     /* damit kein Weiß mehr */
@@ -169,4 +172,33 @@
 .scroll-pane .viewport {
     -fx-background-color: transparent;
     /* Inhaltshintergrund */
+}
+
+/* The background area of the scroll bar */
+.scroll-bar {
+    -fx-background-color: transparent; /* Keeps it clean */
+}
+
+/* The track area behind the thumb */
+.scroll-bar .track {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 4;
+}
+
+/* The draggable thumb itself */
+.scroll-bar .thumb {
+    -fx-background-color: #606060;
+    -fx-background-radius: 4;
+}
+
+/* Hover state for better visibility */
+.scroll-bar .thumb:hover {
+    -fx-background-color: #404040;
+}
+
+/* Optional: make buttons (arrows) invisible for a modern flat style */
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-opacity: 0;
+    -fx-padding: 0;
 }

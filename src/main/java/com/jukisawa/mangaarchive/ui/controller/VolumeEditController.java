@@ -10,7 +10,7 @@ import javafx.scene.control.TextFormatter;
 import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 
-public class VolumePopupController {
+public class VolumeEditController {
 
     @FXML
     private TextField volumeField;
