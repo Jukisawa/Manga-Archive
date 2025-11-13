@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
@@ -201,11 +202,21 @@ public class MangaEditController {
             Image image = null;
 
             try {
-                if (db.hasImage()) {
-                    image = db.getImage();
-                } else if (db.hasFiles()) {
+                if (db.hasFiles()) {
                     File file = db.getFiles().getFirst();
                     image = new Image(file.toURI().toString());
+                } else if (db.hasImage()) {
+                    Image temp = db.getImage();
+                    WritableImage writableImage = new WritableImage(
+                            (int) temp.getWidth(),
+                            (int) temp.getHeight()
+                    );
+                    writableImage.getPixelWriter().setPixels(
+                            0, 0, (int) temp.getWidth(), (int) temp.getHeight(),
+                            temp.getPixelReader(),
+                            0, 0
+                    );
+                    image = writableImage;
                 }
 
                 if (image != null) {

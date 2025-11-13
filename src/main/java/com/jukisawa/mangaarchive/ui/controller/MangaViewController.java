@@ -200,6 +200,7 @@ public class MangaViewController {
         abortedLbl.setStyle("-fx-font-weight: bold;");
         mangaTotalLbl.setStyle("-fx-font-weight: bold;");
         volumeTotalLbl.setStyle("-fx-font-weight: bold;");
+        stats.getChildren().clear();
         stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, mangaTotalLbl, volumeTotalLbl);
     }
 
