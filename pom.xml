@@ -163,6 +163,7 @@
                                 <addmodule>java.instrument</addmodule>
                                 <addmodule>javafx.controls</addmodule>
                                 <addmodule>javafx.fxml</addmodule>
+                                <addmodule>javafx.swing</addmodule>
                                 <!-- if you want these other javafx modules then
                                      uncomment them and ensure you
                                      also have maven dependencies for them -->

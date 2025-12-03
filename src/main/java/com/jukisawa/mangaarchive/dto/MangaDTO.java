@@ -13,10 +13,12 @@ public class MangaDTO {
     private byte[] coverImage;
     private String related;
     private String alternateName;
+    private String description;
+    private String publisher;
 
-    public MangaDTO(int id, String name, String location, MangaState state, List<GenreDTO> genres,
-                    int rating,
-                    List<VolumeDTO> volumes, byte[] coverImage, String related, String alternateName) {
+    public MangaDTO(int id, String name, String location, MangaState state,
+                    List<GenreDTO> genres, int rating, List<VolumeDTO> volumes, byte[] coverImage,
+                    String related, String alternateName, String description, String publisher) {
         this.id = id;
         this.name = name;
         this.location = location;
@@ -27,6 +29,8 @@ public class MangaDTO {
         this.coverImage = coverImage;
         this.related = related;
         this.alternateName = alternateName;
+        this.description = description;
+        this.publisher = publisher;
     }
 
     public MangaDTO() {
@@ -110,5 +114,21 @@ public class MangaDTO {
 
     public void setState(MangaState state) {
         this.state = state;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
     }
 }

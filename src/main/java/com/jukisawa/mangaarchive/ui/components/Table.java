@@ -59,6 +59,11 @@ public class Table<T> extends VBox {
 
     public void addStringColumn(String title, int minWidth, Function<T, String> valueProvider, boolean centerContent,
                                 boolean centerHeader) {
+        addStringColumn(title, minWidth, valueProvider, centerContent, centerHeader, null);
+    }
+
+    public void addStringColumn(String title, int minWidth, Function<T, String> valueProvider, boolean centerContent,
+                                boolean centerHeader, Consumer<T> onClick) {
         addStringColumn(
                 title,
                 minWidth,
@@ -69,12 +74,12 @@ public class Table<T> extends VBox {
                     return val != null ? val.toLowerCase() : "";
                 },
                 centerContent,
-                centerHeader
+                centerHeader, onClick
         );
     }
 
     public void addStringColumn(String title, int width, Function<T, String> valueProvider,
-                                Function<T, String> sortKeyExtractor, boolean centerContent, boolean centerHeader) {
+                                Function<T, String> sortKeyExtractor, boolean centerContent, boolean centerHeader, Consumer<T> onClick) {
         addNodeColumn(title, width, t -> {
             Label label = new Label(valueProvider.apply(t));
             label.setPrefWidth(width);
@@ -83,7 +88,7 @@ public class Table<T> extends VBox {
                 label.setMaxWidth(Double.MAX_VALUE);
             }
             return label;
-        }, sortKeyExtractor, centerContent, centerHeader);
+        }, sortKeyExtractor, centerContent, centerHeader, onClick);
     }
 
     public void addActionColumn(Runnable onAdd, Consumer<T> onEdit, Runnable onShiftAdd) {
@@ -93,19 +98,14 @@ public class Table<T> extends VBox {
             editBtn.setOnAction(_ -> onEdit.accept(t));
             editBtn.setStyle("-fx-background-color: transparent;");
             return editBtn;
-        }, onAdd, null, true, onShiftAdd));
+        }, onAdd, null, true, onShiftAdd, null));
         updateHeader();
         refresh();
     }
 
-    public void addNodeColumn(String title, int width, Function<T, Node> nodeProvider, boolean centerContent,
-                              boolean centerHeader) {
-        addNodeColumn(title, width, nodeProvider, null, centerContent, centerHeader);
-    }
-
     public void addNodeColumn(String title, int width, Function<T, Node> nodeProvider, Function<T, String> sortKey,
-                              boolean centerContent, boolean centerHeader) {
-        columns.add(new Column<>(title, width, nodeProvider, null, sortKey, centerHeader, null));
+                              boolean centerContent, boolean centerHeader, Consumer<T> onClick) {
+        columns.add(new Column<>(title, width, nodeProvider, null, sortKey, centerHeader, null, onClick));
         updateHeader();
         refresh();
     }
@@ -277,8 +277,12 @@ public class Table<T> extends VBox {
                 cell.getStyleClass().add("table-cell");
                 row.getChildren().add(cell);
 
+                if(col.onClick != null) {
+                    cell.setOnMouseClicked(_ -> col.onClick.accept(t));
+                }
+
                 // Hover logic
-                if(col.headerAction == null && hoverPopup != null) {
+                if (col.headerAction == null && hoverPopup != null) {
                     cell.setOnMouseEntered(_ -> hoverPopup.showFor(t, row));
                     cell.setOnMouseExited(_ -> hoverPopup.hide());
                 }
@@ -326,9 +330,10 @@ public class Table<T> extends VBox {
         Runnable headerAction;
         Runnable headerShiftAction;
         boolean centerHeader;
+        Consumer<T> onClick;
 
         Column(String title, double minWidth, Function<T, Node> nodeProvider, Runnable headerAction,
-               Function<T, String> sortKeyExtractor, boolean centerHeader, Runnable headerShiftAction) {
+               Function<T, String> sortKeyExtractor, boolean centerHeader, Runnable headerShiftAction, Consumer<T> onClick) {
             this.title = title;
             this.minWidth = minWidth;
             this.nodeProvider = nodeProvider;
@@ -336,6 +341,7 @@ public class Table<T> extends VBox {
             this.headerAction = headerAction;
             this.centerHeader = centerHeader;
             this.headerShiftAction = headerShiftAction;
+            this.onClick = onClick;
         }
     }
 }

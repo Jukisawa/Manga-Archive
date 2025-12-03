@@ -2,6 +2,7 @@ package com.jukisawa.mangaarchive;
 
 import com.jukisawa.mangaarchive.database.Database;
 import com.jukisawa.mangaarchive.database.DatabaseInitializer;
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.repository.GenreRepository;
 import com.jukisawa.mangaarchive.repository.MangaGenreRepository;
 import com.jukisawa.mangaarchive.repository.MangaRepository;
@@ -26,20 +27,20 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage stage) {
         // Datenbankverbindung
-        Connection connection = Database.getConnection();
+        TransactionManager transactionManager = new TransactionManager();
         DatabaseInitializer.initDatabase();
 
         // Repositories erstellen
-        MangaRepository kundeRepository = new MangaRepository(connection);
-        GenreRepository genreRepository = new GenreRepository(connection);
-        MangaGenreRepository mangaGenreRepository = new MangaGenreRepository(connection);
-        VolumeRepository volumeRepository = new VolumeRepository(connection);
+        MangaRepository kundeRepository = new MangaRepository(transactionManager);
+        GenreRepository genreRepository = new GenreRepository(transactionManager);
+        MangaGenreRepository mangaGenreRepository = new MangaGenreRepository(transactionManager);
+        VolumeRepository volumeRepository = new VolumeRepository(transactionManager);
 
         // Services erstellen
-        GenreService genreService = new GenreService(genreRepository);
-        MangaService mangaService = new MangaService(kundeRepository, mangaGenreRepository, genreService,
+        GenreService genreService = new GenreService(transactionManager, genreRepository, mangaGenreRepository);
+        MangaService mangaService = new MangaService(transactionManager, kundeRepository, mangaGenreRepository, genreService,
                 volumeRepository);
-        VolumeService volumeService = new VolumeService(volumeRepository);
+        VolumeService volumeService = new VolumeService(transactionManager, volumeRepository);
 
         try {
             // FXML & Controller laden
@@ -65,7 +66,7 @@ public class MainApplication extends Application {
             // Verbindung beim Schließen trennen
             stage.setOnCloseRequest(_ -> {
                 try {
-                    connection.close();
+                    transactionManager.getConnection().close();
                 } catch (Exception ex) {
                     LOGGER.log(Level.SEVERE, "Fehler beim schließen der Db verbindung", ex);
                 }

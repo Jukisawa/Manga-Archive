@@ -1,5 +1,6 @@
 package com.jukisawa.mangaarchive.repository;
 
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
 import com.jukisawa.mangaarchive.dto.MangaState;
 
@@ -13,14 +14,15 @@ import java.util.logging.Logger;
 public class MangaRepository {
     private static final Logger LOGGER = Logger.getLogger(MangaRepository.class.getName());
 
-    private final Connection conn;
+    private final TransactionManager transactionManager;
 
-    public MangaRepository(Connection conn) {
-        this.conn = conn;
+    public MangaRepository(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
     public void addManga(MangaDTO mangaDTO) {
-        String insertManga = "INSERT INTO manga(name, location, state, rating, cover_image, related, alternate_name) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        Connection conn = transactionManager.getConnection();
+        String insertManga = "INSERT INTO manga(name, location, state, rating, cover_image, related, alternate_name, description, publisher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertManga, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
@@ -34,6 +36,8 @@ public class MangaRepository {
             }
             pstmt.setString(6, mangaDTO.getRelated());
             pstmt.setString(7, mangaDTO.getAlternateName());
+            pstmt.setString(8, mangaDTO.getDescription());
+            pstmt.setString(9, mangaDTO.getPublisher());
             pstmt.executeUpdate();
             try (ResultSet keys = pstmt.getGeneratedKeys()) {
                 keys.next();
@@ -45,7 +49,8 @@ public class MangaRepository {
     }
 
     public void updateManga(MangaDTO mangaDTO) {
-        String updateManga = "UPDATE manga set name = ?, location = ?, state = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ? WHERE id = ?";
+        Connection conn = transactionManager.getConnection();
+        String updateManga = "UPDATE manga set name = ?, location = ?, state = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ?, description = ?, publisher = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
@@ -59,7 +64,9 @@ public class MangaRepository {
             }
             pstmt.setString(6, mangaDTO.getRelated());
             pstmt.setString(7, mangaDTO.getAlternateName());
-            pstmt.setInt(8, mangaDTO.getId());
+            pstmt.setString(8, mangaDTO.getDescription());
+            pstmt.setString(9, mangaDTO.getPublisher());
+            pstmt.setInt(10, mangaDTO.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim update von manga", e);
@@ -67,13 +74,20 @@ public class MangaRepository {
     }
 
     public List<MangaDTO> getAll() {
-        String selectManga = "SELECT id, name, location, state, rating, cover_image, related, alternate_name FROM manga";
+        Connection conn = transactionManager.getConnection();
+        String selectManga = "SELECT id, name, location, state, rating, cover_image, " +
+                "related, alternate_name, description, publisher " +
+                "FROM manga";
         List<MangaDTO> Result = new ArrayList<>();
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(selectManga)) {
             while (rs.next()) {
-                MangaDTO mangaDTO = new MangaDTO(rs.getInt("id"), rs.getString("name"), rs.getString("location"), MangaState.valueOf(rs.getString("state")),
-                        null, rs.getInt("rating"), null, rs.getBytes("cover_image"), rs.getString("related"), rs.getString("alternate_name"));
+                MangaDTO mangaDTO = new MangaDTO(rs.getInt("id"), rs.getString("name"),
+                        rs.getString("location"), MangaState.valueOf(rs.getString("state")),
+                        null, rs.getInt("rating"), null, rs.getBytes("cover_image"),
+                        rs.getString("related"), rs.getString("alternate_name"),
+                        rs.getString("description"), rs.getString("publisher")
+                );
                 Result.add(mangaDTO);
             }
         } catch (SQLException e) {

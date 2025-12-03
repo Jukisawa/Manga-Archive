@@ -1,5 +1,6 @@
 package com.jukisawa.mangaarchive.repository;
 
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.GenreDTO;
 
 import java.sql.*;
@@ -11,17 +12,18 @@ import java.util.logging.Logger;
 public class GenreRepository {
     private static final Logger LOGGER = Logger.getLogger(GenreRepository.class.getName());
 
-    private final Connection conn;
+    private final TransactionManager transactionManager;
 
-    public GenreRepository(Connection conn) {
-        this.conn = conn;
+    public GenreRepository(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
     public List<GenreDTO> getAll() {
+        Connection conn = transactionManager.getConnection();
         List<GenreDTO> result = new ArrayList<>();
         String selectGenres = """
                 Select id, name
-                from genre""";
+                from genre order by name""";
 
         try (PreparedStatement pstmt = conn.prepareStatement(selectGenres)) {
 
@@ -39,8 +41,9 @@ public class GenreRepository {
     }
 
     public void addGenre(GenreDTO genreDTO) {
-        String insertVolume = "INSERT INTO genre (name) VALUES (?)";
-        try (PreparedStatement pstmt = conn.prepareStatement(insertVolume, Statement.RETURN_GENERATED_KEYS)) {
+        Connection conn = transactionManager.getConnection();
+        String insertGenre = "INSERT INTO genre (name) VALUES (?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(insertGenre, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, genreDTO.getName());
             pstmt.executeUpdate();
             try (ResultSet keys = pstmt.getGeneratedKeys()) {
@@ -53,13 +56,25 @@ public class GenreRepository {
     }
 
     public void updateGenre(GenreDTO genreDTO) {
-        String updateManga = "UPDATE genre set name = ? WHERE id = ?";
-        try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
+        Connection conn = transactionManager.getConnection();
+        String updateGenre = "UPDATE genre set name = ? WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(updateGenre)) {
             pstmt.setString(1, genreDTO.getName());
             pstmt.setInt(2, genreDTO.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim UPDATE von Genre", e);
+        }
+    }
+
+    public void deleteGenre(GenreDTO genreDTO) {
+        Connection conn = transactionManager.getConnection();
+        String deleteGenre = "DELETE FROM genre WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteGenre)) {
+            pstmt.setInt(1, genreDTO.getId());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim DELETEN von Genre", e);
         }
     }
 

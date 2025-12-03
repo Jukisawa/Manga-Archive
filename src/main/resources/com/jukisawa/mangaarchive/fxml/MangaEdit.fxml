@@ -12,27 +12,31 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.jukisawa.mangaarchive.ui.controller.MangaEditController"
-            prefWidth="1400" prefHeight="300"
+            prefWidth="1400" prefHeight="700"
             style="-fx-background-color: #2b2b2b; -fx-padding: 15; -fx-background-radius: 10;">
 
     <center>
         <VBox spacing="10" alignment="CENTER_LEFT">
-            <TextField fx:id="nameField" promptText="Name"/>
-            <TextField fx:id="locationField" promptText="Location"/>
-            <HBox spacing="10" alignment="CENTER_LEFT">
+            <TextField fx:id="nameField" promptText="Name" maxWidth="1.7976931348623157E308"/>
+            <TextField fx:id="locationField" promptText="Location" maxWidth="1.7976931348623157E308"/>
+            <HBox spacing="10" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308">
                 <Label text="Status:"/>
                 <ComboBox fx:id="stateDropdown" prefWidth="150"/>
             </HBox>
+
             <Label text="Genre auswählen:"
                    style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
-            <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" minHeight="300" maxHeight="300">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS">
                 <TilePane fx:id="genreContainer" hgap="10" vgap="10" prefColumns="10"
                           tileAlignment="TOP_LEFT"/>
             </ScrollPane>
-            <TextField fx:id="ratingField" promptText="Bewertung (1-10)"/>
+
+            <TextField fx:id="ratingField" promptText="Bewertung (1-10)" maxWidth="1.7976931348623157E308"/>
             <Label text="Cover:"
                    style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;"/>
-            <HBox spacing="10" alignment="CENTER_LEFT">
+
+
+            <HBox spacing="10" alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308">
                 <StackPane fx:id="coverContainer"
                            prefWidth="200" prefHeight="270"
                            style="-fx-border-color: #666; -fx-border-width: 1; -fx-alignment: center;">
@@ -47,8 +51,12 @@
                         onAction="#onDeleteCover"/>
             </HBox>
 
-            <TextField fx:id="relatedField" promptText="Abhängigkeiten"/>
-            <TextField fx:id="alternateNameField" promptText="Alternative Namen"/>
+            <TextField fx:id="relatedField" promptText="Abhängigkeiten" maxWidth="1.7976931348623157E308"/>
+            <TextField fx:id="alternateNameField" promptText="Alternative Namen" maxWidth="1.7976931348623157E308"/>
+
+            <TextArea  fx:id="descriptionField" promptText="Beschreibung" VBox.vgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
+
+            <TextField fx:id="publisherField" promptText="Verlag" maxWidth="1.7976931348623157E308"/>
         </VBox>
     </center>
 

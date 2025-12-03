@@ -25,6 +25,8 @@
 
     <bottom>
         <HBox spacing="10" alignment="CENTER_RIGHT" style="-fx-padding: 10;">
+            <Button text="Löschen" onAction="#onDelete"
+                    style="-fx-background-color: #444; -fx-text-fill: red;" />
             <Button text="Abbrechen" onAction="#onCancel"
                     style="-fx-background-color: #444; -fx-text-fill: white;" />
             <Button text="Speichern" onAction="#onSave"

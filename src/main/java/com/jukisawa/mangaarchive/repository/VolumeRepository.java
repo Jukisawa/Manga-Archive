@@ -1,5 +1,6 @@
 package com.jukisawa.mangaarchive.repository;
 
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.VolumeDTO;
 
 import java.sql.Connection;
@@ -16,13 +17,14 @@ import java.util.stream.Collectors;
 public class VolumeRepository {
     private static final Logger LOGGER = Logger.getLogger(VolumeRepository.class.getName());
 
-    private final Connection conn;
+    private final TransactionManager transactionManager;
 
-    public VolumeRepository(Connection conn) {
-        this.conn = conn;
+    public VolumeRepository(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
     public List<VolumeDTO> getByMangaIds(List<Integer> mangaIds) {
+        Connection conn = transactionManager.getConnection();
         List<VolumeDTO> result = new ArrayList<>();
         String selectVolume = """
                 Select id, manga_id, volume, arc, note
@@ -51,6 +53,7 @@ public class VolumeRepository {
     }
 
     public void addVolume(VolumeDTO volumeDTO) {
+        Connection conn = transactionManager.getConnection();
         String insertVolume = "INSERT INTO manga_volume (manga_id, volume, arc, note) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertVolume, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setInt(1, volumeDTO.getMangaId());
@@ -68,13 +71,14 @@ public class VolumeRepository {
     }
 
     public void updateVolume(VolumeDTO volumeDTO) {
+        Connection conn = transactionManager.getConnection();
         String updateManga = "UPDATE manga_volume set manga_id = ?, volume = ?, arc = ?, note = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
             pstmt.setInt(1, volumeDTO.getMangaId());
             pstmt.setInt(2, volumeDTO.getVolume());
             pstmt.setString(3, volumeDTO.getArc());
             pstmt.setString(4, volumeDTO.getNote());
-            pstmt.setInt(6, volumeDTO.getId());
+            pstmt.setInt(5, volumeDTO.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim update von Volume", e);

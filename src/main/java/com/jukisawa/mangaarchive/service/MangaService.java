@@ -1,5 +1,6 @@
 package com.jukisawa.mangaarchive.service;
 
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.GenreDTO;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
 import com.jukisawa.mangaarchive.dto.MangaGenreDTO;
@@ -16,32 +17,42 @@ import java.util.stream.Collectors;
 
 
 public class MangaService {
+    private final TransactionManager transactionManager;
     private final MangaRepository mangaRepository;
     private final MangaGenreRepository mangaGenreRepository;
     private final GenreService genreService;
     private final VolumeRepository volumeRepository;
 
-    public MangaService(MangaRepository mangaRepository, MangaGenreRepository mangaGenreRepository,
+    public MangaService(TransactionManager transactionManager, MangaRepository mangaRepository, MangaGenreRepository mangaGenreRepository,
                         GenreService genreService,
-            VolumeRepository volumeRepository) {
+                        VolumeRepository volumeRepository) {
+        this.transactionManager = transactionManager;
         this.mangaRepository = mangaRepository;
         this.mangaGenreRepository = mangaGenreRepository;
         this.genreService = genreService;
         this.volumeRepository = volumeRepository;
     }
 
-    public void saveManga(MangaDTO mangaDTO) {
+    public void saveManga(MangaDTO mangaDTO) throws Exception {
 
-        // Manga Speichern
-        if (mangaDTO.getId() == 0) {
-            mangaRepository.addManga(mangaDTO);
-        } else {
-            mangaRepository.updateManga(mangaDTO);
+        transactionManager.beginTransaction();
+        try {
+            // Manga Speichern
+            if (mangaDTO.getId() == 0) {
+                mangaRepository.addManga(mangaDTO);
+            } else {
+                mangaRepository.updateManga(mangaDTO);
+            }
+
+            // Manga Genre Relation Speichern
+            List<Integer> genreIds = mangaDTO.getGenres().stream().map(GenreDTO::getId).toList();
+            mangaGenreRepository.saveMangaGenreRelation(mangaDTO.getId(), genreIds);
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new Exception("Fehler beim speichern von Manga.", e);
         }
 
-        // Manga Genre Relation Speichern
-        List<Integer> genreIds = mangaDTO.getGenres().stream().map(GenreDTO::getId).toList();
-        mangaGenreRepository.saveMangaGenreRelation(mangaDTO.getId(), genreIds);
     }
 
     public List<MangaDTO> getAllMangas() {

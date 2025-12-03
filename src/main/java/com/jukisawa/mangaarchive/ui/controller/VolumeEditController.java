@@ -1,6 +1,8 @@
 package com.jukisawa.mangaarchive.ui.controller;
 
 import java.util.function.UnaryOperator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.jukisawa.mangaarchive.dto.VolumeDTO;
 import com.jukisawa.mangaarchive.service.VolumeService;
@@ -11,6 +13,7 @@ import javafx.stage.Stage;
 import javafx.util.converter.IntegerStringConverter;
 
 public class VolumeEditController {
+    private static final Logger LOGGER = Logger.getLogger(VolumeEditController.class.getName());
 
     @FXML
     private TextField volumeField;
@@ -68,17 +71,21 @@ public class VolumeEditController {
 
     @FXML
     private void onSave() {
-        if (volume == null) {
-            volume = new VolumeDTO();
+        try {
+            if (volume == null) {
+                volume = new VolumeDTO();
+            }
+
+            volume.setArc(arcField.getText());
+            volume.setVolume(Integer.parseInt(volumeField.getText()));
+            volume.setNote(noteField.getText());
+
+            volumeService.saveVolume(volume);
+            saved = true;
+            closeWindow();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim speichern von Volume", e);
         }
-
-        volume.setArc(arcField.getText());
-        volume.setVolume(Integer.parseInt(volumeField.getText()));
-        volume.setNote(noteField.getText());
-
-        volumeService.saveVolume(volume);
-        saved = true;
-        closeWindow();
     }
 
     @FXML

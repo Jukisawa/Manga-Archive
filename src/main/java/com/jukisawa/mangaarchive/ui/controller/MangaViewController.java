@@ -33,6 +33,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
@@ -80,8 +81,11 @@ public class MangaViewController {
 
     @FXML
     public void initialize() {
+        mangaTable.addStringColumn("Id", 50, m -> String.valueOf(m.getId()), false, false);
         mangaTable.addStringColumn("Name", 200, MangaDTO::getName, false, false);
-        mangaTable.addStringColumn("Alternativ Name", 200, MangaDTO::getAlternateName, false, false);
+        mangaTable.addStringColumn("Related", 200, MangaDTO::getRelated, false, false, (dto) -> {
+            filterField.setText(dto.getRelated());
+        });
         mangaTable.addStringColumn("Location", 200, MangaDTO::getLocation, false, false);
         mangaTable.addStringColumn("Status", 200, m -> m.getState().getDisplayName(), true, false);
         mangaTable.addStringColumn("Genres", 200,
@@ -93,17 +97,36 @@ public class MangaViewController {
 
         //hover part
         HoverPopup<MangaDTO> hoverPopup = new HoverPopup<>(manga -> {
-            VBox hoverBox = new VBox(5);
+            HBox hoverBox = new HBox(10);
+            hoverBox.prefHeight(350);
+            hoverBox.maxHeight(350);
+            hoverBox.setStyle("-fx-background-color: #3c3f41; -fx-padding: 10; -fx-background-radius: 5;");
+
+            VBox leftColumn = new VBox(5);
             if (manga.getCoverImage() != null) {
                 ImageView img = new ImageView(new Image(new ByteArrayInputStream(manga.getCoverImage())));
                 img.setFitWidth(150);
                 img.setPreserveRatio(true);
-                hoverBox.getChildren().add(img);
+                leftColumn.getChildren().add(img);
             }
+            String altNameText = manga.getAlternateName() == null ? "" : manga.getAlternateName();
+            Label altName = new Label("Alt. Name: " + altNameText.replace("; ", "\n"));
+            altName.setStyle("-fx-text-fill: #cccccc;");
+            leftColumn.getChildren().add(altName);
 
-            String relatedText = manga.getRelated() == null ? "" : manga.getRelated();
-            Label related = new Label("Related: " + relatedText);
-            hoverBox.getChildren().add(related);
+            VBox rightColumn = new VBox();
+            rightColumn.setPrefWidth(200);
+
+            String descriptionText = manga.getDescription() == null ? "" : manga.getDescription();
+            Label description = new Label("Beschreibung: " + descriptionText);
+            description.setWrapText(true);
+            description.setMaxWidth(Double.MAX_VALUE);
+            description.setStyle("-fx-text-fill: #cccccc;");
+
+            rightColumn.getChildren().add(description);
+
+            HBox.setHgrow(rightColumn, Priority.ALWAYS);
+            hoverBox.getChildren().addAll(leftColumn, rightColumn);
 
             return hoverBox;
         });
@@ -251,6 +274,9 @@ public class MangaViewController {
             // Textbox filter
             if (filterText.isEmpty())
                 return true;
+            if(manga.getRelated().toLowerCase().contains(filterText)) {
+                return true;
+            }
             if (manga.getName().toLowerCase().contains(filterText))
                 return true;
             if (manga.getAlternateName() != null && manga.getAlternateName().toLowerCase().contains(filterText))
@@ -267,6 +293,15 @@ public class MangaViewController {
         });
     }
 
+    public void onReset() {
+        filterField.setText("");
+        completedCb.setSelected(true);
+        abortedCb.setSelected(true);
+        ongoingCb.setSelected(true);
+        genreCheckBoxes.values().forEach(cb -> cb.setSelected(false));
+
+    }
+
     private void onAddVolumeClicked(int mangaId) {
         VolumeDTO volume = new VolumeDTO();
         volume.setMangaId(mangaId);
@@ -274,26 +309,29 @@ public class MangaViewController {
     }
 
     private void onAddShiftVolumeClicked(int mangaId) {
-        VolumeDTO volume = new VolumeDTO();
-        MangaDTO manga = mangaList.stream()
-                .filter(m -> m.getId() == mangaId)
-                .findFirst()
-                .orElse(null);
-        if (manga != null) {
-            VolumeDTO lastVolume = manga.getVolumes().stream().max(Comparator.comparingInt(VolumeDTO::getVolume))
+        try {
+            VolumeDTO volume = new VolumeDTO();
+            MangaDTO manga = mangaList.stream()
+                    .filter(m -> m.getId() == mangaId)
+                    .findFirst()
                     .orElse(null);
-            if (lastVolume != null) {
-                volume.setArc(lastVolume.getArc());
-                volume.setVolume(lastVolume.getVolume() + 1);
-                volume.setNote(lastVolume.getNote());
-                volume.setMangaId(mangaId);
-                volumeService.saveVolume(volume);
-                nestedVolumeMap.get(manga.getId()).add(volume);
-                manga.getVolumes().add(volume);
-                updateStats();
+            if (manga != null) {
+                VolumeDTO lastVolume = manga.getVolumes().stream().max(Comparator.comparingInt(VolumeDTO::getVolume))
+                        .orElse(null);
+                if (lastVolume != null) {
+                    volume.setArc(lastVolume.getArc());
+                    volume.setVolume(lastVolume.getVolume() + 1);
+                    volume.setNote(lastVolume.getNote());
+                    volume.setMangaId(mangaId);
+                    volumeService.saveVolume(volume);
+                    nestedVolumeMap.get(manga.getId()).add(volume);
+                    manga.getVolumes().add(volume);
+                    updateStats();
+                }
             }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim schnellen Volume hinzufügen.", e);
         }
-
     }
 
     private void onEditVolumeClicked(VolumeDTO volume) {
@@ -372,7 +410,6 @@ public class MangaViewController {
             stage.setTitle(newManga ? "Neuer Manga erfassen" : "Manga bearbeiten");
             stage.setScene(scene);
             stage.initModality(Modality.APPLICATION_MODAL); // blockiert Hauptfenster
-            stage.setResizable(false);
             stage.getIcons().addAll(StageIconHelper.getIcons());
 
             // Optional Höhe dynamisch anpassen

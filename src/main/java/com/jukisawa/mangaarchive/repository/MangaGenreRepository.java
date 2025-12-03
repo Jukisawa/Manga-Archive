@@ -1,5 +1,6 @@
 package com.jukisawa.mangaarchive.repository;
 
+import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.MangaGenreDTO;
 
 import java.sql.Connection;
@@ -14,13 +15,14 @@ import java.util.stream.Collectors;
 
 public class MangaGenreRepository {
     private static final Logger LOGGER = Logger.getLogger(MangaGenreRepository.class.getName());
-    private final Connection conn;
+    private final TransactionManager transactionManager;
 
-    public MangaGenreRepository(Connection conn) {
-        this.conn = conn;
+    public MangaGenreRepository(TransactionManager transactionManager) {
+        this.transactionManager = transactionManager;
     }
 
     public void saveMangaGenreRelation(int mangaID, List<Integer> genreIds) {
+        Connection conn = transactionManager.getConnection();
         String deleteRealtaion = "DELETE FROM manga_genre_nm WHERE manga_id = " + mangaID;
         String insertMangaGenreNM = "INSERT INTO manga_genre_nm(manga_id, genre_id) VALUES (?, ?)";
 
@@ -43,6 +45,7 @@ public class MangaGenreRepository {
     }
 
     public List<MangaGenreDTO> getByMangaIds(List<Integer> mangaIds) {
+        Connection conn = transactionManager.getConnection();
         List<MangaGenreDTO> result = new ArrayList<>();
         String selectMangaGenre = """
                 Select manga_id, genre_id
@@ -67,5 +70,16 @@ public class MangaGenreRepository {
         }
 
         return result;
+    }
+
+    public void deleteByGenreId(int genreId) {
+        Connection conn = transactionManager.getConnection();
+        String deleteByGenre = "DELETE FROM manga_genre_nm WHERE genre_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteByGenre)) {
+            pstmt.setInt(1, genreId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim DELETEN von manga_genre_nm by genreId", e);
+        }
     }
 }

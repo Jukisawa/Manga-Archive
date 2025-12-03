@@ -13,8 +13,11 @@ import javafx.scene.control.TextField;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GenreEditController {
+    private static final Logger LOGGER = Logger.getLogger(GenreEditController.class.getName());
     @FXML
     private CustomDropdown<GenreDTO> genreDropdown;
     @FXML
@@ -91,18 +94,33 @@ public class GenreEditController {
     }
 
     public void onSave() {
-        if (genreDTO == null)
-            return;
-        genreDTO.setName(nameField.getText());
-        genreService.saveGenre(genreDTO);
-        saved = true;
-        if (!genreList.contains(genreDTO)) {
-            genreList.add(genreDTO);
-            // Beim neu Hinzufügen danach Namefield Leeren und neues Genre setzten
-            genreDTO = new GenreDTO();
-            nameField.setText("");
+        try {
+            if (genreDTO == null)
+                return;
+            genreDTO.setName(nameField.getText());
+            genreService.saveGenre(genreDTO);
+            saved = true;
+            if (!genreList.contains(genreDTO)) {
+                genreList.add(genreDTO);
+                // Beim neu Hinzufügen danach Namefield Leeren und neues Genre setzten
+                genreDTO = new GenreDTO();
+                nameField.setText("");
+            }
+            genreDropdown.refreshList();
+            genreDropdown.refreshDisplay();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim speichern von Genre.", e);
         }
-        genreDropdown.refreshList();
-        genreDropdown.refreshDisplay();
+    }
+
+    public void onDelete() {
+        try {
+            if (genreDTO == null)
+                return;
+            genreService.deleteGenre(genreDTO);
+            genreDropdown.selectFirst();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim speichern von Genre.", e);
+        }
     }
 }

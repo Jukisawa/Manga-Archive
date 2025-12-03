@@ -107,6 +107,10 @@ public class CustomDropdown<T> extends HBox {
         selectedItem.set(item);
     }
 
+    public void selectFirst() {
+        setSelectedItem(items.getFirst());
+    }
+
     public ObjectProperty<T> selectedItemProperty() {
         return selectedItem;
     }

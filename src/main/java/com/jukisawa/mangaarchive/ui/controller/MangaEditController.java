@@ -47,6 +47,10 @@ public class MangaEditController {
     private TextField relatedField;
     @FXML
     private TextField alternateNameField;
+    @FXML
+    private TextArea  descriptionField;
+    @FXML
+    private TextField publisherField;
 
     private MangaDTO manga;
     private boolean saved;
@@ -124,6 +128,8 @@ public class MangaEditController {
             ratingField.setText(String.valueOf(manga.getRating()));
             relatedField.setText(manga.getRelated());
             alternateNameField.setText(manga.getAlternateName());
+            descriptionField.setText(manga.getDescription());
+            publisherField.setText(manga.getPublisher());
             if (manga.getGenres() != null) {
                 for (GenreDTO genre : manga.getGenres()) {
                     CheckBox cb = genreCheckboxes.get(genre);
@@ -151,31 +157,38 @@ public class MangaEditController {
 
     @FXML
     private void onSave() {
-        if (manga == null) {
-            manga = new MangaDTO();
+        try {
+            if (manga == null) {
+                manga = new MangaDTO();
+            }
+
+            manga.setName(nameField.getText());
+            manga.setLocation(locationField.getText());
+            manga.setState(stateDropdown.getValue() == null ? MangaState.ONGOING : stateDropdown.getValue());
+            manga.setRating(ratingField.getText().isEmpty() ? 1 : Integer.parseInt(ratingField.getText()));
+            manga.setRelated(relatedField.getText());
+            manga.setAlternateName(alternateNameField.getText());
+            manga.setDescription(descriptionField.getText());
+            manga.setPublisher(publisherField.getText());
+
+            if (coverBytes != null) {
+                manga.setCoverImage(coverBytes);
+            }
+
+            List<GenreDTO> selectedGenres = genreCheckboxes.entrySet().stream()
+                    .filter(e -> e.getValue().isSelected())
+                    .map(Map.Entry::getKey)
+                    .toList();
+
+            manga.setGenres(selectedGenres);
+            manga.setVolumes(new ArrayList<>());
+            mangaService.saveManga(manga);
+            saved = true;
+            closeWindow();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim Speichern von Manga");
         }
 
-        manga.setName(nameField.getText());
-        manga.setLocation(locationField.getText());
-        manga.setState(stateDropdown.getValue());
-        manga.setRating(Integer.parseInt(ratingField.getText()));
-        manga.setRelated(relatedField.getText());
-        manga.setAlternateName(alternateNameField.getText());
-
-        if (coverBytes != null) {
-            manga.setCoverImage(coverBytes);
-        }
-
-        List<GenreDTO> selectedGenres = genreCheckboxes.entrySet().stream()
-                .filter(e -> e.getValue().isSelected())
-                .map(Map.Entry::getKey)
-                .toList();
-
-        manga.setGenres(selectedGenres);
-        manga.setVolumes(new ArrayList<>());
-        mangaService.saveManga(manga);
-        saved = true;
-        closeWindow();
     }
 
     @FXML
