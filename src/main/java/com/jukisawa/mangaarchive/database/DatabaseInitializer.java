@@ -138,6 +138,7 @@ public class DatabaseInitializer {
             SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "alternate_name", "TEXT");
             SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "description", "TEXT");
             SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "publisher", "TEXT");
+            SQLiteSchemaUtil.addColumnIfMissing(conn, "manga", "Autor", "TEXT");
 
 
         } catch (SQLException e) {

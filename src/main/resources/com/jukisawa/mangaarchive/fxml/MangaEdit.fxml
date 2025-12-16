@@ -54,8 +54,9 @@
             <TextField fx:id="relatedField" promptText="Abhängigkeiten" maxWidth="1.7976931348623157E308"/>
             <TextField fx:id="alternateNameField" promptText="Alternative Namen" maxWidth="1.7976931348623157E308"/>
 
-            <TextArea  fx:id="descriptionField" promptText="Beschreibung" VBox.vgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
+            <TextArea  fx:id="descriptionField" promptText="Beschreibung" wrapText="true" VBox.vgrow="ALWAYS" maxWidth="1.7976931348623157E308" />
 
+            <TextField fx:id="autorField" promptText="Autor" maxWidth="1.7976931348623157E308"/>
             <TextField fx:id="publisherField" promptText="Verlag" maxWidth="1.7976931348623157E308"/>
         </VBox>
     </center>

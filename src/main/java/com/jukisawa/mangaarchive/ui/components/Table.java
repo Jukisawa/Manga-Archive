@@ -7,7 +7,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
@@ -28,6 +30,7 @@ public class Table<T> extends VBox {
     private SortedList<T> items;
     private Function<T, Node> nestedTableProvider;
     private HoverPopup<T> hoverPopup;
+    private static final double SCROLLBAR_WIDTH = 12.0;
 
     private boolean ascending = true;
     private Column<T> lastSortedColumn = null;
@@ -44,8 +47,21 @@ public class Table<T> extends VBox {
 
         // Tabellenstruktur
         header = new HBox();
+        Region scrollbarSpacer = new Region();
+        scrollbarSpacer.setMinWidth(SCROLLBAR_WIDTH);
+        scrollbarSpacer.setPrefWidth(SCROLLBAR_WIDTH);
+        header.getChildren().add(scrollbarSpacer);
         getChildren().add(header);
-        getChildren().add(tableBody);
+        //getChildren().add(tableBody);
+
+        ScrollPane tableBodyScrollPane = new ScrollPane();
+        tableBodyScrollPane.setContent(tableBody);
+        tableBodyScrollPane.setFitToWidth(true); // Wichtig, damit die Spaltenbreiten passen
+        tableBodyScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // Keine horizontale Scrollbar
+        // Optional: Damit die Tabelle den verfügbaren Platz im FXML ausfüllt
+        VBox.setVgrow(tableBodyScrollPane, Priority.ALWAYS);
+
+        getChildren().add(tableBodyScrollPane);
 
         // Spalten-Listener
         ChangeListener<Number> widthListener = (_, _, newW) -> resizeColumns(newW.doubleValue());
@@ -133,8 +149,9 @@ public class Table<T> extends VBox {
         if (columns.isEmpty())
             return;
 
+        double effectiveWidth = totalWidth - SCROLLBAR_WIDTH;
         double minWidthSum = columns.stream().mapToDouble(c -> c.minWidth).sum();
-        double extraSpace = Math.max(0, totalWidth - minWidthSum - 40);
+        double extraSpace = Math.max(0, effectiveWidth - minWidthSum - 40); // 40 ist das Padding
         double perColumnExtra = extraSpace / columns.size();
 
         for (Column<T> col : columns) {
@@ -202,6 +219,7 @@ public class Table<T> extends VBox {
     }
 
     private void updateHeader() {
+        Node scrollbarSpacer = header.getChildren().isEmpty() ? null : header.getChildren().getLast();
         header.getChildren().clear();
         for (Column<T> col : columns) {
             if (col.headerAction != null) {
@@ -223,22 +241,30 @@ public class Table<T> extends VBox {
                     addBtn.setMaxWidth(Double.MAX_VALUE);
                 }
             } else {
-                Label label = new Label(col.title);
-                label.setPrefWidth(col.currentWidth);
-                label.setMinWidth(col.minWidth);
-                label.setStyle("-fx-font-weight: bold;");
-                if (col.centerHeader) {
-                    label.setAlignment(Pos.CENTER);
-                    label.setMaxWidth(Double.MAX_VALUE);
-                }
-                label.setOnMouseClicked(_ -> {
-                    if (col.sortKeyExtractor != null) {
-                        sortByColumn(col);
-                    }
-                });
+                Label label = getLabel(col);
                 header.getChildren().add(label);
             }
         }
+        if (scrollbarSpacer instanceof Region spacer) {
+            header.getChildren().add(spacer);
+        }
+    }
+
+    private Label getLabel(Column<T> col) {
+        Label label = new Label(col.title);
+        label.setPrefWidth(col.currentWidth);
+        label.setMinWidth(col.minWidth);
+        label.setStyle("-fx-font-weight: bold;");
+        if (col.centerHeader) {
+            label.setAlignment(Pos.CENTER);
+            label.setMaxWidth(Double.MAX_VALUE);
+        }
+        label.setOnMouseClicked(_ -> {
+            if (col.sortKeyExtractor != null) {
+                sortByColumn(col);
+            }
+        });
+        return label;
     }
 
     private void applyColumnWidths() {
@@ -265,7 +291,7 @@ public class Table<T> extends VBox {
         }
     }
 
-    private void refresh() {
+    public void refresh() {
         tableBody.getChildren().clear();
         if (items == null) return;
         for (T t : items) {
@@ -277,7 +303,7 @@ public class Table<T> extends VBox {
                 cell.getStyleClass().add("table-cell");
                 row.getChildren().add(cell);
 
-                if(col.onClick != null) {
+                if (col.onClick != null) {
                     cell.setOnMouseClicked(_ -> col.onClick.accept(t));
                 }
 

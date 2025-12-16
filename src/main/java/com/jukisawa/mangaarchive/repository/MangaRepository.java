@@ -22,7 +22,7 @@ public class MangaRepository {
 
     public void addManga(MangaDTO mangaDTO) {
         Connection conn = transactionManager.getConnection();
-        String insertManga = "INSERT INTO manga(name, location, state, rating, cover_image, related, alternate_name, description, publisher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertManga = "INSERT INTO manga(name, location, state, rating, cover_image, related, alternate_name, description, publisher, autor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = conn.prepareStatement(insertManga, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
@@ -38,6 +38,7 @@ public class MangaRepository {
             pstmt.setString(7, mangaDTO.getAlternateName());
             pstmt.setString(8, mangaDTO.getDescription());
             pstmt.setString(9, mangaDTO.getPublisher());
+            pstmt.setString(10, mangaDTO.getAutor());
             pstmt.executeUpdate();
             try (ResultSet keys = pstmt.getGeneratedKeys()) {
                 keys.next();
@@ -50,7 +51,7 @@ public class MangaRepository {
 
     public void updateManga(MangaDTO mangaDTO) {
         Connection conn = transactionManager.getConnection();
-        String updateManga = "UPDATE manga set name = ?, location = ?, state = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ?, description = ?, publisher = ? WHERE id = ?";
+        String updateManga = "UPDATE manga set name = ?, location = ?, state = ?, rating = ?, cover_image = ?, related = ?, alternate_name = ?, description = ?, publisher = ?, autor = ? WHERE id = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(updateManga)) {
             pstmt.setString(1, mangaDTO.getName());
             pstmt.setString(2, mangaDTO.getLocation());
@@ -66,7 +67,8 @@ public class MangaRepository {
             pstmt.setString(7, mangaDTO.getAlternateName());
             pstmt.setString(8, mangaDTO.getDescription());
             pstmt.setString(9, mangaDTO.getPublisher());
-            pstmt.setInt(10, mangaDTO.getId());
+            pstmt.setString(10, mangaDTO.getAutor());
+            pstmt.setInt(11, mangaDTO.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Fehler beim update von manga", e);
@@ -76,7 +78,7 @@ public class MangaRepository {
     public List<MangaDTO> getAll() {
         Connection conn = transactionManager.getConnection();
         String selectManga = "SELECT id, name, location, state, rating, cover_image, " +
-                "related, alternate_name, description, publisher " +
+                "related, alternate_name, description, publisher, autor " +
                 "FROM manga";
         List<MangaDTO> Result = new ArrayList<>();
         try (Statement stmt = conn.createStatement();
@@ -86,7 +88,7 @@ public class MangaRepository {
                         rs.getString("location"), MangaState.valueOf(rs.getString("state")),
                         null, rs.getInt("rating"), null, rs.getBytes("cover_image"),
                         rs.getString("related"), rs.getString("alternate_name"),
-                        rs.getString("description"), rs.getString("publisher")
+                        rs.getString("description"), rs.getString("publisher"), rs.getString("autor")
                 );
                 Result.add(mangaDTO);
             }

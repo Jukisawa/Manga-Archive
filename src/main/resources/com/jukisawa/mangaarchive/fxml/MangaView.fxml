@@ -44,7 +44,5 @@
         <HBox fx:id="stats" styleClass="table-header">
         </HBox>
     </HBox>
-    <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER">
-        <Table fx:id="mangaTable"/>
-    </ScrollPane>
+    <Table fx:id="mangaTable"/>
 </VBox>

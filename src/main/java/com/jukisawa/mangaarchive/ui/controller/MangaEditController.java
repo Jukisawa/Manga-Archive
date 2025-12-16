@@ -51,6 +51,8 @@ public class MangaEditController {
     private TextArea  descriptionField;
     @FXML
     private TextField publisherField;
+    @FXML
+    private TextField autorField;
 
     private MangaDTO manga;
     private boolean saved;
@@ -130,6 +132,7 @@ public class MangaEditController {
             alternateNameField.setText(manga.getAlternateName());
             descriptionField.setText(manga.getDescription());
             publisherField.setText(manga.getPublisher());
+            autorField.setText(manga.getAutor());
             if (manga.getGenres() != null) {
                 for (GenreDTO genre : manga.getGenres()) {
                     CheckBox cb = genreCheckboxes.get(genre);
@@ -170,6 +173,7 @@ public class MangaEditController {
             manga.setAlternateName(alternateNameField.getText());
             manga.setDescription(descriptionField.getText());
             manga.setPublisher(publisherField.getText());
+            manga.setAutor(autorField.getText());
 
             if (coverBytes != null) {
                 manga.setCoverImage(coverBytes);

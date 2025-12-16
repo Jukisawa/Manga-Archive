@@ -15,10 +15,11 @@ public class MangaDTO {
     private String alternateName;
     private String description;
     private String publisher;
+    private String autor;
 
     public MangaDTO(int id, String name, String location, MangaState state,
                     List<GenreDTO> genres, int rating, List<VolumeDTO> volumes, byte[] coverImage,
-                    String related, String alternateName, String description, String publisher) {
+                    String related, String alternateName, String description, String publisher, String autor) {
         this.id = id;
         this.name = name;
         this.location = location;
@@ -31,6 +32,7 @@ public class MangaDTO {
         this.alternateName = alternateName;
         this.description = description;
         this.publisher = publisher;
+        this.autor = autor;
     }
 
     public MangaDTO() {
@@ -130,5 +132,13 @@ public class MangaDTO {
 
     public void setPublisher(String publisher) {
         this.publisher = publisher;
+    }
+
+    public String getAutor() {
+        return autor;
+    }
+
+    public void setAutor(String autor) {
+        this.autor = autor;
     }
 }

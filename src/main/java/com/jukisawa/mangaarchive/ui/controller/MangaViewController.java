@@ -86,6 +86,8 @@ public class MangaViewController {
         mangaTable.addStringColumn("Related", 200, MangaDTO::getRelated, false, false, (dto) -> {
             filterField.setText(dto.getRelated());
         });
+        mangaTable.addStringColumn("Autor", 200, MangaDTO::getAutor, false, false);
+        mangaTable.addStringColumn("Verlag", 200, MangaDTO::getPublisher, false, false);
         mangaTable.addStringColumn("Location", 200, MangaDTO::getLocation, false, false);
         mangaTable.addStringColumn("Status", 200, m -> m.getState().getDisplayName(), true, false);
         mangaTable.addStringColumn("Genres", 200,
@@ -277,6 +279,12 @@ public class MangaViewController {
             if(manga.getRelated().toLowerCase().contains(filterText)) {
                 return true;
             }
+            if(manga.getAutor().toLowerCase().contains(filterText)) {
+                return true;
+            }
+            if(manga.getPublisher().toLowerCase().contains(filterText)) {
+                return true;
+            }
             if (manga.getName().toLowerCase().contains(filterText))
                 return true;
             if (manga.getAlternateName() != null && manga.getAlternateName().toLowerCase().contains(filterText))
@@ -421,6 +429,7 @@ public class MangaViewController {
                     mangaList.add(controller.getMangaDTO());
                 }
                 updateStats();
+                mangaTable.refresh();
             }
 
         } catch (IOException e) {
