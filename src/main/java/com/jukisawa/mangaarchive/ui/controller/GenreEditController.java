@@ -56,6 +56,7 @@ public class GenreEditController {
         genreList.add(newItem);
         genreList.addAll(genres);
         genreDropdown.setItems(genreList);
+        genreDropdown.setSelectedItem(newItem);
     }
 
     private void handleGenreChange(GenreDTO oldGenreDto, GenreDTO newGenreDto) {
@@ -115,12 +116,12 @@ public class GenreEditController {
 
     public void onDelete() {
         try {
-            if (genreDTO == null)
+            if (genreDTO == null || genreDTO.getId() == 0)
                 return;
             genreService.deleteGenre(genreDTO);
             genreDropdown.selectFirst();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Fehler beim speichern von Genre.", e);
+            LOGGER.log(Level.SEVERE, "Fehler beim löschen von Genre.", e);
         }
     }
 }

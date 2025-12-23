@@ -276,13 +276,13 @@ public class MangaViewController {
             // Textbox filter
             if (filterText.isEmpty())
                 return true;
-            if(manga.getRelated().toLowerCase().contains(filterText)) {
+            if(manga.getRelated() != null && manga.getRelated().toLowerCase().contains(filterText)) {
                 return true;
             }
-            if(manga.getAutor().toLowerCase().contains(filterText)) {
+            if(manga.getAutor() != null && manga.getAutor().toLowerCase().contains(filterText)) {
                 return true;
             }
-            if(manga.getPublisher().toLowerCase().contains(filterText)) {
+            if(manga.getPublisher() != null && manga.getPublisher().toLowerCase().contains(filterText)) {
                 return true;
             }
             if (manga.getName().toLowerCase().contains(filterText))
@@ -439,6 +439,7 @@ public class MangaViewController {
 
     private void openGenreEditor() {
         try {
+            genrePopup.hide();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/jukisawa/mangaarchive/fxml/GenreEdit.fxml"));
             Parent root = loader.load();
 
