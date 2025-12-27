@@ -4,6 +4,8 @@ import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.dto.VolumeDTO;
 import com.jukisawa.mangaarchive.repository.VolumeRepository;
 
+import java.sql.SQLException;
+
 public class VolumeService {
 
     private final TransactionManager transactionManager;
@@ -27,6 +29,18 @@ public class VolumeService {
         catch (Exception e) {
             transactionManager.rollback();
             throw new Exception("Fehler beim speichern vom Volume.", e);
+        }
+    }
+
+    public void deleteVolume(VolumeDTO volumeDTO) throws Exception {
+        transactionManager.beginTransaction();
+        try {
+            volumeRepository.deleteByVolumeId(volumeDTO.getId());
+
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new Exception("Fehler beim Löschen vom Volume.", e);
         }
     }
 

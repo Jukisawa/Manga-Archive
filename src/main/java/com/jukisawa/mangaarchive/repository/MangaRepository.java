@@ -98,4 +98,15 @@ public class MangaRepository {
 
         return Result;
     }
+
+    public void deleteByMangaId(int mangaId) {
+        Connection conn = transactionManager.getConnection();
+        String deleteByGenre = "DELETE FROM manga WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteByGenre)) {
+            pstmt.setInt(1, mangaId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim DELETEN von manga by id", e);
+        }
+    }
 }

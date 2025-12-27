@@ -9,10 +9,7 @@ import com.jukisawa.mangaarchive.repository.MangaGenreRepository;
 import com.jukisawa.mangaarchive.repository.MangaRepository;
 import com.jukisawa.mangaarchive.repository.VolumeRepository;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -52,7 +49,20 @@ public class MangaService {
             transactionManager.rollback();
             throw new Exception("Fehler beim speichern von Manga.", e);
         }
+    }
 
+    public void deleteManga(MangaDTO mangaDTO) throws Exception {
+        transactionManager.beginTransaction();
+        try {
+            mangaGenreRepository.deleteByMangaId(mangaDTO.getId());
+            volumeRepository.deleteByMangaId(mangaDTO.getId());
+            mangaRepository.deleteByMangaId(mangaDTO.getId());
+
+            transactionManager.commit();
+        } catch (Exception e) {
+            transactionManager.rollback();
+            throw new Exception("Fehler beim Löschen von Manga.", e);
+        }
     }
 
     public List<MangaDTO> getAllMangas() {

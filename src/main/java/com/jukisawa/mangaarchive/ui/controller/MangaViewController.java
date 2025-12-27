@@ -25,10 +25,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -95,7 +92,9 @@ public class MangaViewController {
         mangaTable.addStringColumn("Rating", 200, m -> String.valueOf(m.getRating()), true, false);
         mangaTable.addActionColumn(
                 this::onAddMangaClicked,
-                this::onEditMangaClicked, null);
+                this::onEditMangaClicked,
+                this::onDeleteMangaClicked
+                , null);
 
         //hover part
         HoverPopup<MangaDTO> hoverPopup = new HoverPopup<>(manga -> {
@@ -142,7 +141,8 @@ public class MangaViewController {
             volumeTable.addStringColumn("Notiz", 200, VolumeDTO::getNote, false, false);
             volumeTable.addActionColumn(
                     () -> onAddVolumeClicked(manga.getId()),
-                    this::onEditVolumeClicked, () -> onAddShiftVolumeClicked(manga.getId()));
+                    this::onEditVolumeClicked,
+                    this::onDelteVolumeClicked, () -> onAddShiftVolumeClicked(manga.getId()));
 
             ObservableList<VolumeDTO> observableVolumes =
                     nestedVolumeMap.computeIfAbsent(manga.getId(),
@@ -276,13 +276,13 @@ public class MangaViewController {
             // Textbox filter
             if (filterText.isEmpty())
                 return true;
-            if(manga.getRelated() != null && manga.getRelated().toLowerCase().contains(filterText)) {
+            if (manga.getRelated() != null && manga.getRelated().toLowerCase().contains(filterText)) {
                 return true;
             }
-            if(manga.getAutor() != null && manga.getAutor().toLowerCase().contains(filterText)) {
+            if (manga.getAutor() != null && manga.getAutor().toLowerCase().contains(filterText)) {
                 return true;
             }
-            if(manga.getPublisher() != null && manga.getPublisher().toLowerCase().contains(filterText)) {
+            if (manga.getPublisher() != null && manga.getPublisher().toLowerCase().contains(filterText)) {
                 return true;
             }
             if (manga.getName().toLowerCase().contains(filterText))
@@ -394,6 +394,58 @@ public class MangaViewController {
 
     private void onAddMangaClicked() {
         openMangaEditor(null);
+    }
+
+    private void onDeleteMangaClicked(MangaDTO manga) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        javafx.stage.Stage stage = (javafx.stage.Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().addAll(StageIconHelper.getIcons());
+        alert.setTitle("Manga löschen");
+        alert.setHeaderText("Möchten Sie diesen Manga wirklich löschen?");
+        alert.setContentText("Name: " + manga.getName());
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
+        dialogPane.getStyleClass().add("dialog-pane");
+        alert.setGraphic(null);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                mangaService.deleteManga(manga);
+                mangaList.remove(manga);
+                mangaTable.refresh();
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Fehler beim Löschen von Manga", e);
+            }
+        }
+    }
+
+    private void onDelteVolumeClicked(VolumeDTO volumeDTO) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        javafx.stage.Stage stage = (javafx.stage.Stage) alert.getDialogPane().getScene().getWindow();
+        stage.getIcons().addAll(StageIconHelper.getIcons());
+        alert.setTitle("Band löschen");
+        alert.setHeaderText("Möchten Sie diesen Band wirklich löschen?");
+        alert.setContentText("Band: " + volumeDTO.getVolume());
+
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/com/jukisawa/mangaarchive/css/styles.css")).toExternalForm());
+        dialogPane.getStyleClass().add("dialog-pane");
+        alert.setGraphic(null);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                volumeService.deleteVolume(volumeDTO);
+                ObservableList<VolumeDTO> observableVolumes = nestedVolumeMap.get(volumeDTO.getMangaId());
+                if (observableVolumes != null) {
+                    observableVolumes.remove(volumeDTO);
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Fehler beim Löschen von Volume", e);
+            }
+        }
     }
 
     private void onEditMangaClicked(MangaDTO manga) {

@@ -84,4 +84,28 @@ public class VolumeRepository {
             LOGGER.log(Level.SEVERE, "Fehler beim update von Volume", e);
         }
     }
+
+    public void deleteByMangaId(int mangaId) {
+        Connection conn = transactionManager.getConnection();
+        String deleteByGenre = "DELETE FROM manga_volume WHERE manga_id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteByGenre)) {
+            pstmt.setInt(1, mangaId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim DELETEN von manga_volume by manga_id", e);
+        }
+    }
+
+    public void deleteByVolumeId(int volumeId) {
+        Connection conn = transactionManager.getConnection();
+        String deleteByGenre = "DELETE FROM manga_volume WHERE id = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(deleteByGenre)) {
+            pstmt.setInt(1, volumeId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fehler beim DELETEN von manga_volume by id", e);
+        }
+    }
+
+
 }

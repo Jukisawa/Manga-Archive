@@ -107,14 +107,27 @@ public class Table<T> extends VBox {
         }, sortKeyExtractor, centerContent, centerHeader, onClick);
     }
 
-    public void addActionColumn(Runnable onAdd, Consumer<T> onEdit, Runnable onShiftAdd) {
-        columns.add(new Column<>("Aktion", 80, t -> {
+    public void addActionColumn(Runnable onAdd, Consumer<T> onEdit, Consumer<T> onDelete, Runnable onShiftAdd) {
+        columns.add(new Column<>("Aktion", 120, t -> { // Increased width slightly for two buttons
+            HBox actions = new HBox(8); // 8px spacing between buttons
+            actions.setAlignment(Pos.CENTER);
+
+            // Edit Button
             Button editBtn = new Button();
             editBtn.setGraphic(createEditIcon());
             editBtn.setOnAction(_ -> onEdit.accept(t));
-            editBtn.setStyle("-fx-background-color: transparent;");
-            return editBtn;
+            editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+            // Delete Button
+            Button deleteBtn = new Button();
+            deleteBtn.setGraphic(createDeleteIcon());
+            deleteBtn.setOnAction(_ -> onDelete.accept(t));
+            deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+
+            actions.getChildren().addAll(editBtn, deleteBtn);
+            return actions;
         }, onAdd, null, true, onShiftAdd, null));
+
         updateHeader();
         refresh();
     }
@@ -343,6 +356,12 @@ public class Table<T> extends VBox {
     private Node createEditIcon() {
         Label icon = new Label("✎");
         icon.setStyle("-fx-font-size: 16;");
+        return icon;
+    }
+
+    private Node createDeleteIcon() {
+        Label icon = new Label("🗑"); // Trash bin icon
+        icon.setStyle("-fx-font-size: 16; -fx-text-fill: #d9534f;"); // Optional: Make it red
         return icon;
     }
 

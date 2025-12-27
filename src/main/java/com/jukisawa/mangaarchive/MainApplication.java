@@ -1,6 +1,5 @@
 package com.jukisawa.mangaarchive;
 
-import com.jukisawa.mangaarchive.database.Database;
 import com.jukisawa.mangaarchive.database.DatabaseInitializer;
 import com.jukisawa.mangaarchive.database.TransactionManager;
 import com.jukisawa.mangaarchive.repository.GenreRepository;
@@ -17,7 +16,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.sql.Connection;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
