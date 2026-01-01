@@ -169,7 +169,6 @@ public class MangaViewController {
         if (relatedData == null || relatedData.isBlank()) return;
 
         ContextMenu relatedPopup = new ContextMenu();
-        // Optional: Style-Klasse für CSS-Customization
         relatedPopup.getStyleClass().add("related-manga-popup");
 
         String[] parts = relatedData.split(";");
@@ -178,7 +177,7 @@ public class MangaViewController {
             if (trimmedPart.isEmpty()) continue;
 
             MenuItem item = new MenuItem(trimmedPart);
-            // Icon hinzufügen (Optional)
+            // Icon hinzufügen
             item.setGraphic(new Label("📖"));
 
             item.setOnAction(_ -> {
@@ -490,6 +489,13 @@ public class MangaViewController {
                 if (observableVolumes != null) {
                     observableVolumes.remove(volumeDTO);
                 }
+                mangaList.stream()
+                        .filter(m -> m.getId() == volumeDTO.getMangaId())
+                        .findFirst()
+                        .ifPresent(manga -> {
+                            manga.getVolumes().removeIf(v -> v.getId() == volumeDTO.getId());
+                        });
+
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Fehler beim Löschen von Volume", e);
             }
