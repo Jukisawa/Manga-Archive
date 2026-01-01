@@ -2,6 +2,7 @@ package com.jukisawa.mangaarchive.ui.components;
 
 import javafx.beans.value.ChangeListener;
 import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -108,23 +109,24 @@ public class Table<T> extends VBox {
     }
 
     public void addActionColumn(Runnable onAdd, Consumer<T> onEdit, Consumer<T> onDelete, Runnable onShiftAdd) {
-        columns.add(new Column<>("Aktion", 120, t -> { // Increased width slightly for two buttons
-            HBox actions = new HBox(8); // 8px spacing between buttons
+        columns.add(new Column<>("Aktion", 180, t -> {
+            HBox actions = new HBox(5);
             actions.setAlignment(Pos.CENTER);
 
-            // Edit Button
-            Button editBtn = new Button();
-            editBtn.setGraphic(createEditIcon());
-            editBtn.setOnAction(_ -> onEdit.accept(t));
-            editBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+            actions.setMaxHeight(20);
+            actions.setMinHeight(20);
+            actions.setPadding(new Insets(0, 5, 0, 5));
 
-            // Delete Button
-            Button deleteBtn = new Button();
-            deleteBtn.setGraphic(createDeleteIcon());
-            deleteBtn.setOnAction(_ -> onDelete.accept(t));
-            deleteBtn.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+            Label expandIcon = new Label("▶");
+            expandIcon.setStyle("-fx-font-size: 11;");
+            Button expandBtn = createIconButton(expandIcon, null);
+            expandBtn.setUserData("expand-button");
 
-            actions.getChildren().addAll(editBtn, deleteBtn);
+            Button editBtn = createIconButton(createEditIcon(), _ -> onEdit.accept(t));
+
+            Button deleteBtn = createIconButton(createDeleteIcon(), _ -> onDelete.accept(t));
+
+            actions.getChildren().addAll(expandBtn, editBtn, deleteBtn);
             return actions;
         }, onAdd, null, true, onShiftAdd, null));
 
@@ -307,13 +309,48 @@ public class Table<T> extends VBox {
     public void refresh() {
         tableBody.getChildren().clear();
         if (items == null) return;
+
         for (T t : items) {
             HBox row = new HBox();
             row.getStyleClass().add("table-row");
 
+            // Nested Table vorbereiten
+            Node nestedNode = nestedTableProvider != null ? nestedTableProvider.apply(t) : null;
+            if (nestedNode != null) {
+                nestedNode.setVisible(false);
+                nestedNode.setManaged(false);
+            }
+
             for (Column<T> col : columns) {
                 Node cell = col.nodeProvider.apply(t);
                 cell.getStyleClass().add("table-cell");
+
+                // Logik: Expand-Button in der Action-HBox funktionsfähig machen
+                if (col.title.equals("Aktion") && cell instanceof HBox actionBox) {
+                    actionBox.getChildren().stream()
+                            .filter(n -> "expand-button".equals(n.getUserData()))
+                            .findFirst()
+                            .ifPresent(n -> {
+                                Button btn = (Button) n;
+
+                                // WICHTIG: Wenn keine Nested Table da ist, Button verstecken
+                                if (nestedNode == null) {
+                                    btn.setVisible(false);
+                                    btn.setManaged(false);
+                                } else {
+                                    // Ansonsten Logik zuweisen
+                                    btn.setVisible(true);
+                                    btn.setManaged(true);
+                                    btn.setOnAction(_ -> {
+                                        boolean isVisible = !nestedNode.isVisible();
+                                        nestedNode.setVisible(isVisible);
+                                        nestedNode.setManaged(isVisible);
+                                        ((Label) btn.getGraphic()).setText(isVisible ? "▼" : "▶");
+                                    });
+                                }
+                            });
+                }
+
                 row.getChildren().add(cell);
 
                 if (col.onClick != null) {
@@ -327,24 +364,27 @@ public class Table<T> extends VBox {
                 }
             }
 
-            // Row über Nested Table
+            row.setAlignment(Pos.CENTER_LEFT);
             tableBody.getChildren().add(row);
-            // Nested Table
-            Node nestedNode = nestedTableProvider != null ? nestedTableProvider.apply(t) : null;
             if (nestedNode != null) {
-                nestedNode.setVisible(false);
-                nestedNode.setManaged(false);
                 tableBody.getChildren().add(nestedNode);
-
-                // Row Click
-                row.setOnMouseClicked(_ -> {
-                    boolean show = !nestedNode.isVisible();
-                    nestedNode.setVisible(show);
-                    nestedNode.setManaged(show);
-                });
             }
-            resizeColumns(totalWidth);
         }
+        resizeColumns(totalWidth);
+    }
+
+    private Button createIconButton(Node icon, Consumer<ActionEvent> action) {
+        Button btn = new Button();
+        btn.setGraphic(icon);
+        if (action != null) {
+            btn.setOnAction(action::accept);
+        }
+
+        btn.setStyle("-fx-background-color: transparent; -fx-cursor: hand; -fx-padding: 2 8 2 8;");
+
+        btn.setMinHeight(30);
+        btn.setMaxHeight(30);
+        return btn;
     }
 
     private Node createPlusIcon() {

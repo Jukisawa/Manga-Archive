@@ -31,6 +31,8 @@
             <CheckBox fx:id="completedCb" text="Abgeschlossen" selected="true"/>
             <CheckBox fx:id="abortedCb" text="Abgebrochen" selected="true"/>
             <CheckBox fx:id="ongoingCb" text="Laufend" selected="true"/>
+            <CheckBox fx:id="hiatusCb" text="Hiatus" selected="true"/>
+            <CheckBox fx:id="missingCb" text="Unvollständig" selected="true"/>
             <Button fx:id="genreFilterButton" text="Genre auswählen"/>
             <Button text="Filter zurücksetzen" onAction="#onReset"/>
         </HBox>

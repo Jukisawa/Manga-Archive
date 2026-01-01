@@ -32,6 +32,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.robot.Robot;
 import javafx.stage.Modality;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -52,6 +53,10 @@ public class MangaViewController {
     private CheckBox abortedCb;
     @FXML
     public CheckBox ongoingCb;
+    @FXML
+    public CheckBox hiatusCb;
+    @FXML
+    public CheckBox missingCb;
     @FXML
     private Button genreFilterButton;
     private final Map<GenreDTO, CheckBox> genreCheckBoxes = new HashMap<>();
@@ -80,9 +85,9 @@ public class MangaViewController {
     public void initialize() {
         mangaTable.addStringColumn("Id", 50, m -> String.valueOf(m.getId()), false, false);
         mangaTable.addStringColumn("Name", 200, MangaDTO::getName, false, false);
-        mangaTable.addStringColumn("Related", 200, MangaDTO::getRelated, false, false, (dto) -> {
-            filterField.setText(dto.getRelated());
-        });
+        mangaTable.addStringColumn("Related", 200, MangaDTO::getRelated, false, false,
+                manga -> showRelatedMangaPopup(manga.getRelated())
+        );
         mangaTable.addStringColumn("Autor", 200, MangaDTO::getAutor, false, false);
         mangaTable.addStringColumn("Verlag", 200, MangaDTO::getPublisher, false, false);
         mangaTable.addStringColumn("Location", 200, MangaDTO::getLocation, false, false);
@@ -160,6 +165,35 @@ public class MangaViewController {
         setupFilter();
     }
 
+    private void showRelatedMangaPopup(String relatedData) {
+        if (relatedData == null || relatedData.isBlank()) return;
+
+        ContextMenu relatedPopup = new ContextMenu();
+        // Optional: Style-Klasse für CSS-Customization
+        relatedPopup.getStyleClass().add("related-manga-popup");
+
+        String[] parts = relatedData.split(";");
+        for (String part : parts) {
+            String trimmedPart = part.trim();
+            if (trimmedPart.isEmpty()) continue;
+
+            MenuItem item = new MenuItem(trimmedPart);
+            // Icon hinzufügen (Optional)
+            item.setGraphic(new Label("📖"));
+
+            item.setOnAction(_ -> {
+                filterField.setText(trimmedPart);
+            });
+
+            relatedPopup.getItems().add(item);
+        }
+
+        Robot robot = new Robot();
+        double mouseX = robot.getMouseX();
+        double mouseY = robot.getMouseY();
+        relatedPopup.show(mangaTable.getScene().getWindow(), mouseX, mouseY);
+    }
+
     public void init() {
         loadManga();
         initGenrePopup();
@@ -212,6 +246,8 @@ public class MangaViewController {
         String completed = "Abgeschlossen: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.COMPLETED).toList().size();
         String aborted = "Abgebrochen: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ABORTED).toList().size();
         String ongoing = "Laufend: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ONGOING).toList().size();
+        String hiatus = "Hiatus: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.HIATUS).toList().size();
+        String missing = "Unvollständig: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.MISSING).toList().size();
         String mangaTotal = "Serien: " + (long) mangaList.size();
         String volumeTotal = "Total Manga: " + mangaList.stream()
                 .mapToLong(manga -> manga.getVolumes().size())
@@ -219,6 +255,8 @@ public class MangaViewController {
         Label completedLbl = new Label(completed);
         Label abortedLbl = new Label(aborted);
         Label ongoingLbl = new Label(ongoing);
+        Label hiatusLbl = new Label(hiatus);
+        Label missingLbl = new Label(missing);
         Label mangaTotalLbl = new Label(mangaTotal);
         Label volumeTotalLbl = new Label(volumeTotal);
         completedLbl.setStyle("-fx-font-weight: bold;");
@@ -226,7 +264,7 @@ public class MangaViewController {
         mangaTotalLbl.setStyle("-fx-font-weight: bold;");
         volumeTotalLbl.setStyle("-fx-font-weight: bold;");
         stats.getChildren().clear();
-        stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, mangaTotalLbl, volumeTotalLbl);
+        stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, hiatusLbl, missingLbl, mangaTotalLbl, volumeTotalLbl);
     }
 
     public void loadManga() {
@@ -242,6 +280,8 @@ public class MangaViewController {
         completedCb.selectedProperty().addListener((_, _, _) -> applyFilter());
         abortedCb.selectedProperty().addListener((_, _, _) -> applyFilter());
         ongoingCb.selectedProperty().addListener((_, _, _) -> applyFilter());
+        hiatusCb.selectedProperty().addListener((_, _, _) -> applyFilter());
+        missingCb.selectedProperty().addListener((_, _, _) -> applyFilter());
     }
 
     private void applyFilter() {
@@ -257,6 +297,12 @@ public class MangaViewController {
                 return false;
             }
             if (!ongoingCb.isSelected() && manga.getState() == MangaState.ONGOING) {
+                return false;
+            }
+            if (!hiatusCb.isSelected() && manga.getState() == MangaState.HIATUS) {
+                return false;
+            }
+            if (!missingCb.isSelected() && manga.getState() == MangaState.MISSING) {
                 return false;
             }
 
@@ -306,6 +352,8 @@ public class MangaViewController {
         completedCb.setSelected(true);
         abortedCb.setSelected(true);
         ongoingCb.setSelected(true);
+        hiatusCb.setSelected(true);
+        missingCb.setSelected(true);
         genreCheckBoxes.values().forEach(cb -> cb.setSelected(false));
 
     }

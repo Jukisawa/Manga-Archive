@@ -100,6 +100,8 @@ public class MangaEditController {
                 setText(empty || item == null ? null : item.getDisplayName());
             }
         });
+
+        stateDropdown.setValue(MangaState.ONGOING);
     }
 
     public void setService(MangaService mangaService) {
