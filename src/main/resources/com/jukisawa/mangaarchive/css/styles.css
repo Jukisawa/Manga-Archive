@@ -134,6 +134,14 @@
     /* vertikale Linien */
 }
 
+.row-missing-volumes .label {
+    -fx-text-fill: #cc0000;
+}
+
+.row-missing-volumes:hover {
+    -fx-background-color: #ffaaaa;
+}
+
 /* Buttons in den Zellen */
 .table-cell button {
     -fx-background-color: transparent;

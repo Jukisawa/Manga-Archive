@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import com.jukisawa.mangaarchive.dto.GenreDTO;
 import com.jukisawa.mangaarchive.dto.MangaDTO;
@@ -83,6 +84,17 @@ public class MangaViewController {
 
     @FXML
     public void initialize() {
+        mangaTable.setRowStyleClassProvider(manga -> {
+            List<Integer> nums = manga.getVolumes().stream()
+                    .map(VolumeDTO::getVolume)
+                    .sorted()
+                    .toList();
+            int missing = IntStream.range(1, nums.size())
+                    .map(i -> nums.get(i) - nums.get(i - 1) - 1)
+                    .sum();
+            return missing > 1 ? "row-missing-volumes" : null;
+        });
+
         mangaTable.addStringColumn("Id", 50, m -> String.valueOf(m.getId()), false, false);
         mangaTable.addStringColumn("Name", 200, MangaDTO::getName, false, false);
         mangaTable.addStringColumn("Related", 200, MangaDTO::getRelated, false, false,
@@ -246,24 +258,38 @@ public class MangaViewController {
         String aborted = "Abgebrochen: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ABORTED).toList().size();
         String ongoing = "Laufend: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.ONGOING).toList().size();
         String hiatus = "Hiatus: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.HIATUS).toList().size();
-        String missing = "Unvollständig: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.MISSING).toList().size();
+        String incomplete = "Unvollständig: " + (long) mangaList.stream().filter(m -> m.getState() == MangaState.MISSING).toList().size();
         String mangaTotal = "Serien: " + (long) mangaList.size();
         String volumeTotal = "Total Manga: " + mangaList.stream()
                 .mapToLong(manga -> manga.getVolumes().size())
+                .sum();
+        String missing = "Fehlende Kapitel: " + mangaList.stream()
+                .mapToInt(obj -> {
+
+                    List<Integer> nums = obj.getVolumes().stream()
+                            .map(VolumeDTO::getVolume)
+                            .sorted()
+                            .toList();
+
+                    return IntStream.range(1, nums.size())
+                            .map(i -> nums.get(i) - nums.get(i - 1) - 1)
+                            .sum();
+                })
                 .sum();
         Label completedLbl = new Label(completed);
         Label abortedLbl = new Label(aborted);
         Label ongoingLbl = new Label(ongoing);
         Label hiatusLbl = new Label(hiatus);
-        Label missingLbl = new Label(missing);
+        Label incompleteLbl = new Label(incomplete);
         Label mangaTotalLbl = new Label(mangaTotal);
         Label volumeTotalLbl = new Label(volumeTotal);
+        Label missingLbl = new Label(missing);
         completedLbl.setStyle("-fx-font-weight: bold;");
         abortedLbl.setStyle("-fx-font-weight: bold;");
         mangaTotalLbl.setStyle("-fx-font-weight: bold;");
         volumeTotalLbl.setStyle("-fx-font-weight: bold;");
         stats.getChildren().clear();
-        stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, hiatusLbl, missingLbl, mangaTotalLbl, volumeTotalLbl);
+        stats.getChildren().addAll(completedLbl, abortedLbl, ongoingLbl, hiatusLbl, incompleteLbl, mangaTotalLbl, volumeTotalLbl, missingLbl);
     }
 
     public void loadManga() {

@@ -40,6 +40,12 @@ public class Table<T> extends VBox {
 
     private final javafx.collections.ListChangeListener<T> listChangeListener = _ -> refresh();
 
+    private Function<T, String> rowStyleClassProvider;
+
+    public void setRowStyleClassProvider(Function<T, String> provider) {
+        this.rowStyleClassProvider = provider;
+    }
+
     public Table() {
         setSpacing(5);
         setPadding(new Insets(10));
@@ -313,6 +319,14 @@ public class Table<T> extends VBox {
         for (T t : items) {
             HBox row = new HBox();
             row.getStyleClass().add("table-row");
+
+            // Dynamische CSS-Klasse pro Row
+            if (rowStyleClassProvider != null) {
+                String extraClass = rowStyleClassProvider.apply(t);
+                if (extraClass != null && !extraClass.isBlank()) {
+                    row.getStyleClass().add(extraClass);
+                }
+            }
 
             // Nested Table vorbereiten
             Node nestedNode = nestedTableProvider != null ? nestedTableProvider.apply(t) : null;
