@@ -92,7 +92,7 @@ public class MangaViewController {
             int missing = IntStream.range(1, nums.size())
                     .map(i -> nums.get(i) - nums.get(i - 1) - 1)
                     .sum();
-            return missing > 1 ? "row-missing-volumes" : null;
+            return missing > 0 ? "row-missing-volumes" : null;
         });
 
         mangaTable.addStringColumn("Id", 50, m -> String.valueOf(m.getId()), false, false);
