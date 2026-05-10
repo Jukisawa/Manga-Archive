@@ -45,6 +45,7 @@ public class MangaViewController {
     @FXML
     public Button openGenreEditorButton;
 
+
     //filter
     @FXML
     private TextField filterField;
@@ -58,6 +59,8 @@ public class MangaViewController {
     public CheckBox hiatusCb;
     @FXML
     public CheckBox missingCb;
+    @FXML
+    public CheckBox missingChapterCb;
     @FXML
     private Button genreFilterButton;
     private final Map<GenreDTO, CheckBox> genreCheckBoxes = new HashMap<>();
@@ -85,12 +88,12 @@ public class MangaViewController {
     @FXML
     public void initialize() {
         mangaTable.setRowStyleClassProvider(manga -> {
-            List<Integer> nums = manga.getVolumes().stream()
+            List<Integer> numbs = manga.getVolumes().stream()
                     .map(VolumeDTO::getVolume)
                     .sorted()
                     .toList();
-            int missing = IntStream.range(1, nums.size())
-                    .map(i -> nums.get(i) - nums.get(i - 1) - 1)
+            int missing = IntStream.range(1, numbs.size())
+                    .map(i -> numbs.get(i) - numbs.get(i - 1) - 1)
                     .sum();
             return missing > 0 ? "row-missing-volumes" : null;
         });
@@ -263,16 +266,16 @@ public class MangaViewController {
         String volumeTotal = "Total Manga: " + mangaList.stream()
                 .mapToLong(manga -> manga.getVolumes().size())
                 .sum();
-        String missing = "Fehlende Kapitel: " + mangaList.stream()
+        String missing = "Fehlende Bänder: " + mangaList.stream()
                 .mapToInt(obj -> {
 
-                    List<Integer> nums = obj.getVolumes().stream()
+                    List<Integer> numbs = obj.getVolumes().stream()
                             .map(VolumeDTO::getVolume)
                             .sorted()
                             .toList();
 
-                    return IntStream.range(1, nums.size())
-                            .map(i -> nums.get(i) - nums.get(i - 1) - 1)
+                    return IntStream.range(1, numbs.size())
+                            .map(i -> numbs.get(i) - numbs.get(i - 1) - 1)
                             .sum();
                 })
                 .sum();
@@ -307,6 +310,7 @@ public class MangaViewController {
         ongoingCb.selectedProperty().addListener((_, _, _) -> applyFilter());
         hiatusCb.selectedProperty().addListener((_, _, _) -> applyFilter());
         missingCb.selectedProperty().addListener((_, _, _) -> applyFilter());
+        missingChapterCb.selectedProperty().addListener((_, _, _) -> applyFilter());
     }
 
     private void applyFilter() {
@@ -314,21 +318,40 @@ public class MangaViewController {
 
         filteredMangas.setPredicate(manga -> {
 
-            // Checkbox Filter
-            if (!completedCb.isSelected() && manga.getState() == MangaState.COMPLETED) {
+            // Berechne fehlende Kapitel
+            List<Integer> numbs = manga.getVolumes().stream()
+                    .map(VolumeDTO::getVolume)
+                    .sorted()
+                    .toList();
+
+            boolean hasMissingChapters = IntStream.range(1, numbs.size())
+                    .map(i -> numbs.get(i) - numbs.get(i - 1) - 1)
+                    .sum() >= 1;
+
+            // Wenn missingChapterCb deaktiviert ist, Mangas mit fehlenden Kapiteln ausblenden
+            if (!missingChapterCb.isSelected() && hasMissingChapters) {
                 return false;
             }
-            if (!abortedCb.isSelected() && manga.getState() == MangaState.ABORTED) {
-                return false;
-            }
-            if (!ongoingCb.isSelected() && manga.getState() == MangaState.ONGOING) {
-                return false;
-            }
-            if (!hiatusCb.isSelected() && manga.getState() == MangaState.HIATUS) {
-                return false;
-            }
-            if (!missingCb.isSelected() && manga.getState() == MangaState.MISSING) {
-                return false;
+
+            // Status-Filter – wird übersprungen wenn Manga fehlende Kapitel hat UND missingChapterCb aktiv ist
+            boolean skipStateFilter = missingChapterCb.isSelected() && hasMissingChapters;
+
+            if (!skipStateFilter) {
+                if (!completedCb.isSelected() && manga.getState() == MangaState.COMPLETED) {
+                    return false;
+                }
+                if (!abortedCb.isSelected() && manga.getState() == MangaState.ABORTED) {
+                    return false;
+                }
+                if (!ongoingCb.isSelected() && manga.getState() == MangaState.ONGOING) {
+                    return false;
+                }
+                if (!hiatusCb.isSelected() && manga.getState() == MangaState.HIATUS) {
+                    return false;
+                }
+                if (!missingCb.isSelected() && manga.getState() == MangaState.MISSING) {
+                    return false;
+                }
             }
 
             // Dropdown Genre Filter
@@ -379,6 +402,7 @@ public class MangaViewController {
         ongoingCb.setSelected(true);
         hiatusCb.setSelected(true);
         missingCb.setSelected(true);
+        missingChapterCb.setSelected(true);
         genreCheckBoxes.values().forEach(cb -> cb.setSelected(false));
 
     }
